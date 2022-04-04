@@ -1,4 +1,4 @@
-''' Module containing functions for processing images from STM scans. Planned functions
+''' Module containing functions for processing images from STM scans. Planned funcastions
     
     readSXM:
         args:
@@ -25,23 +25,50 @@
 '''
 
 import numpy as np
+import skimage
+import pySPM
+import pySPM.SXM as SXM
+import matplotlib.pyplot as plt
+
 from skimage.io import imshow, imread
 from skimage.color import rgb2gray
 from skimage.feature import blob_doh
-import matplotlib.pyplot as plt
 
-import pySPM
-import pySPM.SXM as SXM
+import astar
 
 # Constants
-CO_WIDTH_MIN = 1.00e-9   # The approximate width of CO molecule (m)
+CO_WIDTH_MIN = 0.90e-9   # The approximate width of CO molecule (m)
 CO_WIDTH_MAX = 1.1e-9
 
 ''' Notes:
     Do pixel_threshold by comparing z values of bright and dark spots
 '''
 
-def read_SXM(img_name, plot_imgs=False, pixel_threshold=0.30, min_sigma=2.8284, max_sigma=2.85, threshold=0.015):
+def process_img(image, global_thres=True):
+    ''' Function to process and binarize image
+    '''
+
+    # Get image pixels
+    sample = image
+    
+    # Contrasting? 
+    average = np.average(2*sample)
+    
+    sample = np.where(sample > average, sample, sample-average)
+    
+    if global_thres:
+        # Use Otsu's method for pixel thresholding?
+        pixel_threshold = skimage.filters.threshold_otsu(sample)
+    else:
+        # Use local thresholding
+        pixel_threshold = skimage.filters.threshold_li(sample)
+        
+    # Binarize
+    sample_b = sample > pixel_threshold
+    
+    return sample_b
+    
+def read_SXM(image, plot_imgs=False, min_sigma=2.8284, max_sigma=2.85, only_free_molecules=True):
     ''' Function to read in and process an image and perform blob detection using the matrix of the Hessian determinant method 
         args:
             img_name (str): path + name of image to be read
@@ -51,18 +78,18 @@ def read_SXM(img_name, plot_imgs=False, pixel_threshold=0.30, min_sigma=2.8284, 
             pixel_width (int): width in number of pixels
             pixel_height (int): height in number of pixels
     '''
-    # Get image pixels
-    sample = img_name
     
-    # Contrast? Find better ways to do this
-    average = np.average(2*sample)
-    sample = np.where(sample < average, sample, sample-average)
+    if only_free_molecules:
+        threshold = 0.045
+    else:
+        threshold = 0.025
     
-    # Turn from colored --> grayscale
-    # sample_g = rgb2gray(sample)
-
+    sample = image 
+    
     # Binarize
-    sample_b = sample > pixel_threshold
+    sample_b = process_img(image)
+
+    # To detect abnormal blobs, do blob detection, with min_sigma_normal = 2.5*min_sigma_normal and max_sigma = 3*max_sigma_normal
     
     # Now determine blobs using matrix of Hessian determinant method
     # Note that blob is returned as an n by 3 numpy array representing 3 values (y, x, sigma). (y, x) are coordinates of the
@@ -71,6 +98,7 @@ def read_SXM(img_name, plot_imgs=False, pixel_threshold=0.30, min_sigma=2.8284, 
     blobs = blob_doh(sample_b, min_sigma=min_sigma, max_sigma=max_sigma, threshold=threshold)
     
     if plot_imgs:
+    
         # Create subplots
         fig, ax = plt.subplots(1,3,figsize=(10,5))
         ax[0].imshow(sample)
@@ -91,6 +119,72 @@ def read_SXM(img_name, plot_imgs=False, pixel_threshold=0.30, min_sigma=2.8284, 
     
     return blobs #, pixel_width, pixel_height
 
+def path_finder(image, start, end, CO_pixels, coordinate='pixels', visualize=True, verbose=False):
+
+    # Binarize
+    sample_b = process_img(image)
+    
+    # Get binarized image and turn from False, True --> 1, 0
+    sample_graph = sample_b
+    sample_graph = np.where(sample_graph == True, 0, 1)
+    
+    sample_graph_pro = sample_graph.copy()
+
+    for i in np.arange(0, sample_graph.shape[0], 1):
+        for j in np.arange(0, sample_graph.shape[1], 1):
+        
+            # If pixel on "graph" turned on, make neighbours turned on by setting to 1 as well. The purpose of
+            # this is to make the path guaranteed not to get near any obstacles
+            if sample_graph[i][j] == 1:
+            
+                for n in np.arange(-int(CO_pixels/1.5), int(CO_pixels/1.5), 1):
+                    for m in np.arange(-int(CO_pixels/1.5), int(CO_pixels/1.5), 1):
+                        if 0 < i + n < sample_graph.shape[0] and 0 < j + m < sample_graph.shape[1]:
+                            sample_graph_pro[i+n][j+m] = 1  
+                           
+    
+    plt.imshow(sample_graph_pro)
+    plt.show()
+    
+    # Use A* path finding algorithm
+    path = astar.search(sample_graph_pro, 1, start, end)
+    if visualize:
+    
+        # Make image of the path 
+        path_visualized = np.ones(sample_b.shape)
+        
+        for node in path:
+            path_visualized[node] = 0
+        
+        plt.figure()
+        
+        plt.imshow(sample_b)
+        plt.imshow(path_visualized, cmap='gray', alpha=0.5)
+        plt.title(f'Path between {start} and {end}')
+        plt.xlabel(f'Pixels')
+        plt.ylabel(f'Pixels')
+        plt.show()
+    
+    return path
+
+def get_edges(image, plot=False):
+    ''' Function to get edges from image. Let's use this for our pathfinding algorithm maybe?
+     
+    Args
+        img (np.array): array representing binarized image
+    
+    Out
+        edges (np.array): array representing edges of image
+    ''' 
+    
+    edge_roberts = skimage.filters.roberts(image)
+    
+    if plot:
+        plt.imshow(edge_roberts)
+        plt.show()
+
+    return edge_roberts
+    
 def blobs2points(blobs, centX, centY, width, height, pixel_width, pixel_height):
     ''' Function to take pixel numbers/locations and turn into physical coordinates in space in meters, given
     an image width and height + coordinates for the center of the image
@@ -107,6 +201,7 @@ def blobs2points(blobs, centX, centY, width, height, pixel_width, pixel_height):
             points (nd.array): array where values are (x, y), where x and y are the coordinates corresponding to the center
             of each found blob-
     '''
+    
     # Grab x and y pixel numbers from blobs array
     points_x = blobs[:, 1]
     points_y = blobs[:, 0]
@@ -128,7 +223,7 @@ def blobs2points(blobs, centX, centY, width, height, pixel_width, pixel_height):
     return points 
 
 # Smart Read, calculates min_sigma and max_sigma based on image size
-def find_molecules(img_name):
+def find_molecules(img_name, only_free_molecules=True):
     ''' Function to call readSXM with specific min and max sigma according to width and height of the
     image to generalize the blob detection algorithm and then call points to get physical coordinates of found
     CO molecules
@@ -147,11 +242,11 @@ def find_molecules(img_name):
     image_z = image_obj.get_channel(name='Z').pixels
     image_z = pySPM.normalize(image_z)
     
+    # Get channel for current as well and normalize
     image_curr = image_obj.get_channel(name='Current').pixels
     image_curr = pySPM.normalize(image_curr)
     
-    print(image_curr)
-    
+    # Subtract normalized current channel from normalized z channel to get a "contrasted" image
     image = pySPM.normalize(image_z - image_curr)
     
     # Pull info, header returns a dictionary which contains metadata about the file
@@ -173,11 +268,15 @@ def find_molecules(img_name):
     min_sigma = CO_pixel_width_min/(2*np.sqrt(2))
     max_sigma = CO_pixel_width_max/(2*np.sqrt(2))
     
-    blobs = read_SXM(image, plot_imgs=True, min_sigma=min_sigma, max_sigma=max_sigma)
+    # Get blobs and convert to points
+    blobs = read_SXM(image, plot_imgs=True, min_sigma=min_sigma, max_sigma=max_sigma, only_free_molecules=only_free_molecules)
     points = blobs2points(blobs, centX, centY, width, height, pixel_width, pixel_height)
     
-    return points
+    # Test pathfinder, erase later my guy!!!!!
+    path = path_finder(image, (0, 100), (250, 50), CO_pixel_width_max)
     
+    return points
+
 def Hungarian_assign(points, targets):
     ''' Use the Hungarian method/ Munkres's algorithm to assign the various points in the scan frame to the points
     in the target configuration
@@ -196,9 +295,8 @@ def Hungarian_assign(points, targets):
 
 
 # Try out on images
-img_name = '../../sample2/Topo002.sxm'
+img_name = '../../sample2/Topo014.sxm'
 points = find_molecules(img_name)
-
 
 ax = plt.axes()
 ax.scatter(10**9*points[:, 0], 10**9*points[:, 1], s = 1)
@@ -211,8 +309,11 @@ plt.show()
 Comments: 
 
 Action Items
-1) Issues of CO molecules not having enough contrast from background
-   --> Possible solution: "subtract" background image using a image of scanned background, where STM scans background
-       with no CO molecule. Subtract image from image of interest to be left with CO molecules
+1) Start to do Hungarian assignment
+2) Do a more comprehensive, parallel path assignment + procedure of autoassembly
+   --> Copy/Paste Molecules to fake atom manipulation
+   --> Finally implement all this in LabView
+3) Clean up Procedure
+4) Check if molecule manipulated successfully
 '''
 
