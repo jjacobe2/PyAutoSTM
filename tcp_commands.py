@@ -14,7 +14,7 @@ import bitstring
 import struct
 from ctypes import *
 
-## Helper Functions
+## Helper Functions -- need to test them to make sure they work as intended
 def append_command(command, len_max):
     new_command = command
     
@@ -33,7 +33,7 @@ def float2hex(f_val):
 def hex2float(hex_string):
     f_val = struct.unpack('>f', hex_string)
     
-    return f_val
+    return f_val[0]
 
 # double to hex
 def double2hex(d_val):
@@ -42,10 +42,10 @@ def double2hex(d_val):
     return h
     
 # hex to double
-def hex2double(hex_string)
+def hex2double(hex_string):
     d_val = struct.unpack('>d', hex_string)
     
-    return d_val
+    return d_val[0]
 
 ## Do we need this for what we need so far?
 # hex to 1D array 
@@ -81,7 +81,7 @@ def hex2int(s):
     ''' Function to convert hex strings to 32 bit integers
     '''
     
-    h_string = str(s).hex()
+    h_string = str(s.hex())
     
     # Convert from hex to Python int
     i = int(h_string, 16)
@@ -126,9 +126,9 @@ def get_scan_buffer(client):
     reply = client.sock.recv(1024)
     
     # Converting number of channels, number of pixels, and lines to 
-    num_channels = hex2double(reply[40:44])
-    pixels = hex2double(reply[44 + num_channels*4: 48 + num_channels*4])
-    lines = hex2double(reply[48 + num_channels*4: 52 + num_channels*4])
+    num_channels = hex2int(reply[40:44])
+    pixels = hex2int(reply[44 + num_channels*4: 48 + num_channels*4])
+    lines = hex2int(reply[48 + num_channels*4: 52 + num_channels*4])
     
     return num_channels, pixels, lines
     

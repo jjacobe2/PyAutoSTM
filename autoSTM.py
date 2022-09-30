@@ -17,17 +17,19 @@ import socket
 import bitstring
 import struct
 from ctypes import *
-import matplotlib.pyplot
+import matplotlib.pyplot as plt
 
 class Nanonis:
     ''' Class data structure to handle TCP commands between Python and the Nanonis Software
     '''
-    def __init__(self, ip_address = 'localhost', port = '6501'):
+    def __init__(self, ip_address = 'localhost', port = 6501):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.ip_address = ip_address
+        self.port = port
         self.time_delay = 1 # delay in seconds after sending command or receiving reply from Nanonis software
         
     def connect(self):
-        self.sock.connect((ip_address, port))
+        self.sock.connect((self.ip_address, self.port))
         
     def close(self):
         self.sock.close()
@@ -39,5 +41,6 @@ if __name__ == "__main__":
     num_channels, pixels, lines = tcp.get_scan_buffer(client)
     data = tcp.scan_frame_grab(client, 0, 1, lines, pixels)
     plt.imshow(data, cmap = 'hot')
+    plt.show()
     
     client.close()
