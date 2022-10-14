@@ -59,10 +59,10 @@ def unsignedint2hex(I_val):
     return h
   
 # hex to unsigned int(32)
-def hex2unsignedint(hex_string)
-    I_val = struct.unpack('>d', hex_string)
+def hex2unsignedint(hex_string):
+    I_val = struct.unpack('>I', hex_string)
     
-    return I_val
+    return I_val[0]
 
 ## Do we need this for what we need so far?
 # hex to 1D array 
@@ -112,6 +112,16 @@ def hex2int(s):
     return fp.contents.value
 
 def create_header(name, body_size):
+    ''' Command for constructing a header for sending a TCP request message
+    
+    Args:
+        name (hex string): name of the command
+        body_size (int): size of the body in bytes
+        
+    Returns
+        header (hex string): the appended hex string to be used as a header
+    '''
+    
     header = append_command(name, 32)
     
     header = header + int2byte(body_size, size = 32)
@@ -194,7 +204,8 @@ def current_get(client):
     return current_val
     
 ### Z-Controller
-def zctrl_onoffget(client)
+# ZCtrl.OnOffGet
+def zctrl_onoffget(client):
     ''' Command to get whether or not Z-Controller is on or off
     
     Args:
@@ -216,7 +227,102 @@ def zctrl_onoffget(client)
     zctrl_status = hex2unsignedint(reply[40:44])
     
     return zctrl_status
+
+# ZCtrl.OnOffSet
+def zctrl_onoffset(client, zctrl_status):
+    ''' Command to set ZCtrl off or on
     
+    Args:
+        client (Nanonis object)
+        zctrl_status (unsigned int32): either 0 (set OFF) or 1 (set ON)
+    '''
+    
+    name = b'ZCtrl.OnOffSet'
+    
+    header = create_header(name, body_size = 4)
+    body = unsignedint2hex(zctrl_status)
+    message = header + body
+    
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
+
+# ZCtrl.SetpntGet
+def zctrl_setpntget(client):
+    ''' Command for getting the setpoint of the Z-Controller
+    
+    Args:
+        client (Nanonis object)
+    
+    Returns:
+        setpnt (float): set point in Amps
+    '''
+    
+    name = b'ZCtrl.SetpntGet'
+    
+    header = create_header(name, body_size = 0)
+    message = header
+    
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
+    
+    # Read reply for the setpoint
+    setpnt = hex2float(reply[40:44])
+    
+    return setpnt
+
+# ZCtrl.SetpntSet
+def zctrl_setpntset(client, setpnt):
+    ''' Command for setting the setpoint of the Z-Controller
+
+    Args:
+        client (Nanonis object)
+        setpnt (float): desired set point in Amps
+    '''
+    
+    name = b'ZCtrl.SetpntSet'
+    
+    header = create_header(name, body_size = 4)
+    body = float2hex(setpnt)
+    message = header + body
+    
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
+    
+# ZCtrl.Home
+def zctrl_home(client):
+    ''' Command for moving the tip to its home position
+    
+    Args:
+        client (Nanonis object)
+    '''
+    
+    name = b'ZCtrl.Home'
+    
+    header = create_header(name, body_size = 0)
+    message = header
+    
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
+    
+# ZCtrl.Withdraw
+def zctrl_withdraw(client, wait, timeout):
+    ''' Command for switching off the Z-Controller and fully withdrawing the tip
+    
+    Args:
+        client (Nanonis object)
+        wait (unsigned int32): indicated if function waits until tip is fully withdrawn (=1) or not (=0)
+        timeout (int32): time in ms this function waits. Set to -1 to wait indefinitely
+    '''
+    
+    name = b'ZCtrl.Withdraw'
+    
+    header = create_header(name, body_size = 8)
+    body = unsignedint2hex(wait) + int2byte(timeout)
+    message = header + body
+    
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
+
 ### Scan
 class ScanData():
     def __init__(self):

@@ -42,8 +42,5 @@ if __name__ == "__main__":
     #data = tcp.scan_frame_grab(client, 0, 1, lines, pixels)
     #plt.imshow(data, cmap = 'hot')
     #plt.show()
-    
-    bias_val = tcp.bias_get(client)
-    print(f'Bias voltage in software is {bias_val} V')
-    
+
     client.close()
