@@ -16,8 +16,13 @@ from ctypes import *
 
 ## Helper Functions -- need to test them to make sure they work as intended
 def append_command(command, len_max):
+    ''' Function for appending byte string with empty bytes (b'\x00') until byte string
+    reaches desired length
+    '''
+    
     new_command = command
     
+    # Append with 0's until len_max is reached
     while (len(new_command) < len_max):
         new_command = new_command + b'\x00'
         
@@ -53,7 +58,7 @@ def hex2double(hex_string):
 # hex to 2D array
 # 2D array to hex
  
-# Stuff from George's example
+## Stuff from George's example
 def int2byte(val, size = None):
     ''' Function to convert ints to byte strings
     '''
@@ -76,7 +81,6 @@ def int2byte(val, size = None):
     
     return h
 
-# Stuff from George's example
 def hex2int(s):
     ''' Function to convert hex strings to 32 bit integers
     '''
@@ -106,7 +110,50 @@ def create_header(name, body_size):
 
 ## Commands proper
 # Note, every integer/float/double byte representation is in big-endian representation
-# Implementing Scan.FrameDataGrab in this new framework
+
+### Bias
+def bias_set(client, bias_val):
+    ''' Command for setting bias voltage
+
+    Args:
+        client (Nanonis object)
+        bias_val (V): bias voltage in units of V
+    '''
+    
+    name = b'Bias.Set'
+    
+    header = create_header(name, body_size = 4)
+    body = float2hex(bias_val)
+    
+    message = header + body
+    
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
+
+def bias_get(client, bias_get):
+    ''' Command for getting bias voltage
+    
+    Args:
+        client (Nanonis object)
+        
+    Returns:
+        bias_val (V)
+    '''
+    
+    name = b'Bias.Get'
+    
+    header = create_header(name, body_size = 0)
+    message = header
+    
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
+    
+    # Read body for bias voltage set in Nanonis software
+    bias_val = hex2float(reply[40:44])
+    
+    return bias_val
+    
+### Scan
 class ScanData():
     def __init__(self):
         data = np.array([])
@@ -118,7 +165,6 @@ def get_scan_buffer(client):
     name = b'Scan.BufferGet'
     
     header = create_header(name, body_size = 4)
-    
     message = header
     
     client.sock.send(message)
