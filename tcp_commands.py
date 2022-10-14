@@ -54,7 +54,7 @@ def hex2double(hex_string):
 
 # unsigned int(32) to hex
 def unsignedint2hex(I_val):
-    h = strut.pack('>I', I_val)
+    h = struct.pack('>I', I_val)
     
     return h
   
