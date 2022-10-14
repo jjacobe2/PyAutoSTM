@@ -43,7 +43,7 @@ if __name__ == "__main__":
     #plt.imshow(data, cmap = 'hot')
     #plt.show()
     
-    bias_val = tcp.bias_get(client, bias)
+    bias_val = tcp.bias_get(client)
     print(f'Bias voltage in software is {bias_val} V')
     
     client.close()

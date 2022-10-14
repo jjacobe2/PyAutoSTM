@@ -5,7 +5,7 @@
     Juwan Jeremy Jacobe
     University of Notre Dame
     
-    Last Updated: 30 Sept 2022
+    Last Updated: 14 Oct 2022
 '''
 
 import numpy as np
@@ -51,6 +51,18 @@ def hex2double(hex_string):
     d_val = struct.unpack('>d', hex_string)
     
     return d_val[0]
+
+# unsigned int(32) to hex
+def unsignedint2hex(I_val):
+    h = strut.pack('>I', I_val)
+    
+    return h
+  
+# hex to unsigned int(32)
+def hex2unsignedint(hex_string)
+    I_val = struct.unpack('>d', hex_string)
+    
+    return I_val
 
 ## Do we need this for what we need so far?
 # hex to 1D array 
@@ -112,6 +124,7 @@ def create_header(name, body_size):
 # Note, every integer/float/double byte representation is in big-endian representation
 
 ### Bias
+# Bias.Set
 def bias_set(client, bias_val):
     ''' Command for setting bias voltage
 
@@ -130,7 +143,8 @@ def bias_set(client, bias_val):
     client.sock.send(message)
     reply = client.sock.recv(1024)
 
-def bias_get(client, bias_get):
+# Bias.Get
+def bias_get(client):
     ''' Command for getting bias voltage
     
     Args:
@@ -152,6 +166,56 @@ def bias_get(client, bias_get):
     bias_val = hex2float(reply[40:44])
     
     return bias_val
+    
+### Current
+
+# Current.Get
+def current_get(client):
+    ''' Command to get the tunneling current value
+    
+    Args:
+        client (Nanonis object)
+        
+    Returns:
+        current_val (A)
+    '''
+    
+    name = b'Current.Get'
+    
+    header = create_header(name, body_size = 0)
+    message = header
+    
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
+    
+    # Read body for current value
+    current_val = hex2float(reply[40:44])
+    
+    return current_val
+    
+### Z-Controller
+def zctrl_onoffget(client)
+    ''' Command to get whether or not Z-Controller is on or off
+    
+    Args:
+        client (Nanonis object)
+        
+    Returns:
+        zctrl_status: 0 if Off, 1 if On
+    '''
+    
+    name = b'ZCtrl.OnOffGet'
+    
+    header = create_header(name, body_size = 0)
+    message = header
+    
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
+    
+    # Read body for z-ctrl status
+    zctrl_status = hex2unsignedint(reply[40:44])
+    
+    return zctrl_status
     
 ### Scan
 class ScanData():
