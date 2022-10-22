@@ -88,6 +88,16 @@ def hex2str(hex_string):
 
     return string_val[0]
 
+def hex2integer(hex_string):
+    int_val = struct.unpack('>i', hex_string)
+
+    return int_val[0]
+
+def integer2hex(integer):
+    h = struct.pack('>i', integer)
+
+    return h
+
 ## Do we need this for what we need so far?
 # hex to 1D array 
 # 1D array to hex
@@ -419,7 +429,7 @@ def scan_waitendofscan(client, timeout):
     name = b'Scan.WaitEndOfScan'
 
     header = create_header(name, body_size = 4)
-    body = int2byte(timeout)
+    body = integer2hex(timeout)
     message = header + body
 
     client.sock.send(message)
