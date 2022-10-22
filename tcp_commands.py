@@ -76,6 +76,18 @@ def hex2unsignedshort(hex_string):
     
     return H_val[0]
     
+# string to hex
+def str2hex(string):
+    h = struct.pack('>s', string)
+
+    return h
+
+# hex to string
+def hex2str(hex_string):
+    string_val = struct.unpack('>s', hex_string)
+
+    return string_val[0]
+
 ## Do we need this for what we need so far?
 # hex to 1D array 
 # 1D array to hex
@@ -384,7 +396,44 @@ def scan_statusget(client):
     scan_status = hex2unsignedint(reply[40:44])
     
     return scan_status
-    
+
+# Scan.WaitEndofScan
+def scan_waitendofscan(client, timeout):
+    ''' Command to wait for an end-of-scan, which only returns when
+    an End-of-Scan or timeout occurs (whichever occurs first)
+
+    Args:
+        client (Nanonis object)
+        timeout (int32): sets how many milliseconds this function waits for
+        an End-of-Scan. If -1, waits indefinitely
+
+    Return:
+        timeout_status (unsigned int32): if 1, function timed-out. If 0, function
+        didn't time out
+        file_path_size (unsigned int 32): the number of bytes corresponding to the File path
+        string
+        file_path (str): the path where the data file was automatically saved (if auto-save was on)
+        If no file was saved at the End-of-Scan, it returns an empty path 
+    '''
+
+    name = b'Scan.WaitEndOfScan'
+
+    header = create_header(name, body_size = 4)
+    body = int2byte(timeout)
+    message = header + body
+
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
+    timeout_status = hex2unsignedint(reply[40:44])
+    file_path_size = hex2unsignedint(reply[44:48])
+    file_path = hex2str(reply[48:48+file_path_size])
+
+    return timeout_status, file_path_size, file_path
+
+# Scan.FrameSet
+
+# Scan.FrameGet
+
 # Scan.BufferGet
 def scan_bufferget(client):
     name = b'Scan.BufferGet'
@@ -403,6 +452,8 @@ def scan_bufferget(client):
     
     return num_channels, pixels, lines
     
+# Scan.SpeedSet
+
 # Scan.FrameDataGrab
 def scan_framedatagrab(client, chan, direc, lines, pixels, send_response = 1):
     ''' Function to grab the data of a scan frame
@@ -440,3 +491,5 @@ def scan_framedatagrab(client, chan, direc, lines, pixels, send_response = 1):
     data = np.ndarray(shape = (lines, pixels), dtype = '>f4', buffer = data_array)
     
     return data
+
+## Follow Me
