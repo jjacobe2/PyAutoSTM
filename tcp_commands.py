@@ -78,21 +78,25 @@ def hex2unsignedshort(hex_string):
     
 # string to hex
 def str2hex(string):
-    h = struct.pack('>s', string)
+    h = struct.pack('{}s'.format(len(string)), string)
+    # h = struct.pack('>s', string)
 
     return h
 
 # hex to string
 def hex2str(hex_string):
-    string_val = struct.unpack('>s', hex_string)
+    # string_val = struct.unpack('>s', hex_string)
+    string_val = struct.unpack('{}s'.format(len(hex_string)), hex_string)
 
     return string_val[0]
 
+# hex to integer
 def hex2integer(hex_string):
     int_val = struct.unpack('>i', hex_string)
 
     return int_val[0]
 
+# integer to hex
 def integer2hex(integer):
     h = struct.pack('>i', integer)
 
@@ -436,7 +440,11 @@ def scan_waitendofscan(client, timeout):
     reply = client.sock.recv(1024)
     timeout_status = hex2unsignedint(reply[40:44])
     file_path_size = hex2unsignedint(reply[44:48])
-    file_path = hex2str(reply[48:48+file_path_size])
+
+    if file_path_size > 0:
+        file_path = hex2str(reply[48:48+file_path_size])
+    else:
+        file_path = ''
 
     return timeout_status, file_path_size, file_path
 
