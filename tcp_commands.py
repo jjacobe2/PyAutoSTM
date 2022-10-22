@@ -64,6 +64,18 @@ def hex2unsignedint(hex_string):
     
     return I_val[0]
 
+# unsigned int(16) to hex
+def unsignedshort2hex(H_val):
+    h = struct.pack('>H', H_val)
+    
+    return h
+    
+# hex to unsigned int (16)
+def hex2unsignedshort(hex_string):
+    H_val = struct.unpack('>H', hex_string)
+    
+    return H_val[0]
+    
 ## Do we need this for what we need so far?
 # hex to 1D array 
 # 1D array to hex
@@ -331,7 +343,50 @@ class ScanData():
         lines = 0
         pixels = 0
 
-def get_scan_buffer(client):
+# Scan.Action
+def scan_action(client, action, direction):
+    ''' Command to do a scan action, either start, stop, pause or resume a scan
+    
+    Args:
+        client (Nanonis object)
+        action (unsigned int16): sets which action to perform, where 0 means Start, 1 is Stop, 2 is Pause
+          3 is Resume
+        direction (unsigned int32): if 1, scan is direction is set to up, if 0, direction is down    
+    '''
+    
+    name = b'Scan.Action'
+    
+    header = create_header(name, body_size = 6)
+    body = unsignedshort2hex(action) + unsignedint2hex(direction)
+    message = header + body
+    
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
+
+# Scan.StatusGet
+def scan_statusget(client):
+    ''' Command to see if scan is currently running or not
+    
+    Args: 
+        client (Nanonis object)
+        
+    Returns:
+        scan_status (unsigned int32): if 1 scan is running. If 0, scan is not running
+    '''
+    
+    name = b'Scan.StatusGet'
+    
+    header = create_header(name, body_size = 0)
+    message = header
+    
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
+    scan_status = hex2unsignedint(reply[40:44])
+    
+    return scan_status
+    
+# Scan.BufferGet
+def scan_bufferget(client):
     name = b'Scan.BufferGet'
     
     header = create_header(name, body_size = 4)
@@ -348,7 +403,8 @@ def get_scan_buffer(client):
     
     return num_channels, pixels, lines
     
-def scan_frame_grab(client, chan, direc, lines, pixels, send_response = 1):
+# Scan.FrameDataGrab
+def scan_framedatagrab(client, chan, direc, lines, pixels, send_response = 1):
     ''' Function to grab the data of a scan frame
     
         Args:
