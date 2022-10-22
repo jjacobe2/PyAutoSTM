@@ -14,8 +14,6 @@ import tcp_commands as tcp
 # External imports 
 import numpy as np
 import socket
-import bitstring
-import struct
 from ctypes import *
 import matplotlib.pyplot as plt
 
@@ -43,4 +41,10 @@ if __name__ == "__main__":
     #plt.imshow(data, cmap = 'hot')
     #plt.show()
 
+    num_channels = 2
+    channel_indices = np.array([0, 1])
+    pixels = 256
+    lines = 256
+    tcp.scan_bufferset(num_channels, channel_indices, pixels, lines)
+    
     client.close()

@@ -9,7 +9,6 @@
 '''
 
 import numpy as np
-import socket
 import bitstring
 import struct
 from ctypes import *
@@ -78,17 +77,16 @@ def hex2unsignedshort(hex_string):
     
 # string to hex
 def str2hex(string):
+    string = string.encode('utf-8')
     h = struct.pack('{}s'.format(len(string)), string)
-    # h = struct.pack('>s', string)
 
     return h
 
 # hex to string
 def hex2str(hex_string):
-    # string_val = struct.unpack('>s', hex_string)
     string_val = struct.unpack('{}s'.format(len(hex_string)), hex_string)
 
-    return string_val[0]
+    return string_val[0].decode('utf-8')
 
 # hex to integer
 def hex2integer(hex_string):
@@ -449,8 +447,87 @@ def scan_waitendofscan(client, timeout):
     return timeout_status, file_path_size, file_path
 
 # Scan.FrameSet
+def scan_frameset(client, centX, centY, width, height, angle):
+    ''' Command to configure the scan frame parameters
+
+    Args:
+        client (Nanonis client)
+        centX (float32): x position of scan frame center (m)
+        centY (float32): y position of scan frame center (m)
+        width (float32): width of scan frame (m)
+        height (float32): height of scan frame (m)
+        angle (float32): the angle of scan frame, where positive angle means clockwise rotation (degrees)
+    '''
+
+    name = b'Scan.FrameSet'
+
+    header = create_header(name, body_size = 20)
+    body = float2hex(centX) + float2hex(centY) + float2hex(width) + float2hex(height) + float2hex(angle)
+    message = header + body
+
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
 
 # Scan.FrameGet
+def scan_frameget(client):
+    ''' Command to return scan frame parameters
+
+    Args:
+        client (Nanonis client)
+
+    Returns:
+        centX (float32): x position of scan frame center (m)
+        centY (float32): y position of scan frame center (m)
+        width (float32): width of scan frame (m)
+        height (float32): height of scan frame (m)
+        angle (float32): the angle of scan frame, where positive angle means clockwise rotation (degrees)
+    '''
+
+    name = b'Scan.FrameGet'
+
+    header = create_header(name, body_size = 0)
+    message = header
+
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
+
+    centX = hex2float(reply[40:44])
+    centY = hex2float(reply[44:48])
+    width = hex2float(reply[48:52])
+    height = hex2float(reply[52:56])
+    angle = hex2float(reply[56:60])
+
+    return centX, centY, width, height, angle
+
+# Scan.BufferSet
+def scan_bufferset(client, num_channels, channel_indices, pixels, lines):
+    ''' Configure the scan buffer parameters
+
+    Args:
+        client (Nanonis.client)
+        num_channels (int): the number of recorded channels. Defines the size
+        of the channels indexes array
+        channel_indices (np.array): 1D array of indices of recorded channels. Indices are
+        comprised between 0 and 23 for the 24 signals assigned in the Signals Manager
+        pixels (int): number of pixels per line
+        lines (int): number of scan lines
+    '''
+
+    name = b'Scan.BufferSet'
+
+    array_size = num_channels * 4
+    header = create_header(name, body_size = 12 + array_size)
+    
+    # Go through array and convert to hex string for each element
+    channel_indices_hex = b''
+    for channel_i in channel_indices:
+        channel_indices_hex += integer2hex(channel_i)
+
+    body = integer2hex(num_channels) + channel_indices_hex + integer2hex(pixels) + integer2hex(lines)
+    message = header + body
+
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
 
 # Scan.BufferGet
 def scan_bufferget(client):
@@ -501,7 +578,7 @@ def scan_framedatagrab(client, chan, direc, lines, pixels, send_response = 1):
     
     # Making sure whole message was gotten :>
     while len(reply) < body_size:
-        reply += sock_data.recv(data_size)
+        reply += client.sock.recv(data_size)
         
     data_array = np.frombuffer(reply[52 + name_size:52+name_size+data_size], dtype = np.float32)
     
