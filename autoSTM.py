@@ -41,10 +41,9 @@ if __name__ == "__main__":
     #plt.imshow(data, cmap = 'hot')
     #plt.show()
 
-    num_channels = 2
-    channel_indices = np.array([0, 1])
-    pixels = 256
-    lines = 256
-    tcp.scan_bufferset(num_channels, channel_indices, pixels, lines)
+    x = 40e-9
+    y = 40e-9
+    wait = 1
+    tcp.folme_xyposset(client, x, y, wait)
     
     client.close()

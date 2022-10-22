@@ -548,6 +548,28 @@ def scan_bufferget(client):
     return num_channels, pixels, lines
     
 # Scan.SpeedSet
+def scan_speedset(client, flin_speed, blin_speed, ftime_per_line, btime_per_line, par_const):
+    ''' Configure the scan speed parameters
+
+    Args:
+        client (Nanonis.client)
+        flin_speed (float): forward linear speed (m/s)
+        blin_speed (float): backward linear speed (m/s)
+        ftime_per_line (float): forward time per line (s)
+        btime_per_line (float): backward time per line (s)
+        par_const (unsigned int16): defines which speed parameter to keep constant, where
+        0 means no change, 1 keeps the linear speed constant, and 2 keeps the time per line
+        constant
+    '''
+    
+    name = b'Scan.SpeedSet'
+
+    header = create_header(name, body_size = 18)
+    body = float2hex(flin_speed) + float2hex(blin_speed) + float2hex(ftime_per_line) + float2hex(btime_per_line) + unsignedshort2hex(par_const)
+    message = header + body
+
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
 
 # Scan.FrameDataGrab
 def scan_framedatagrab(client, chan, direc, lines, pixels, send_response = 1):
@@ -588,3 +610,34 @@ def scan_framedatagrab(client, chan, direc, lines, pixels, send_response = 1):
     return data
 
 ## Follow Me
+
+# FolMe.XYPosSet
+def folme_xyposset(client, x, y, wait_end_of_move):
+    ''' Moves the tip to specified X and Y target coordinates (in meters). Moves at
+    the speed specified in the "Speed" parameter in the Follow Me mode of the Scan Control
+    module. Function will return when the tip reaches its destination or if the movement stops
+
+    Args:
+        client (Nanonis.client)
+        x (float64): target x position of the tip
+        y (float64): target y position of the tip
+        wait_end_of_move (unsigned int32): selects whether the function returns immediately (=0) or
+        if it waits until the target is reached or the movement is stopped (=1)
+    '''
+
+    name = b'FolMe.XYPosSet'
+
+    header = create_header(name, body_size = 20)
+    body = double2hex(x) + double2hex(y) + unsignedint2hex(wait_end_of_move)
+    message = header + body
+
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
+
+# FolME.XYPosGet
+
+# FolMe.SpeedSet
+
+# FolMe.SpeedGet
+
+# FolMe.Stop
