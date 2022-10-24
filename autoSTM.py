@@ -36,14 +36,10 @@ if __name__ == "__main__":
     client = Nanonis()
     client.connect()
     
-    #num_channels, pixels, lines = tcp.get_scan_buffer(client)
-    #data = tcp.scan_frame_grab(client, 0, 1, lines, pixels)
-    #plt.imshow(data, cmap = 'hot')
-    #plt.show()
+    num_channels, pixels, lines = tcp.get_scan_buffer(client)
+    chan = 0
+    data = tcp.scan_framedatagrab(client, chan, 1, lines, pixels)
+    plt.imshow(data, cmap = 'hot')
+    plt.show()
 
-    x = 40e-9
-    y = 40e-9
-    wait = 1
-    tcp.folme_xyposset(client, x, y, wait)
-    
     client.close()

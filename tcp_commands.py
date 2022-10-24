@@ -100,13 +100,13 @@ def integer2hex(integer):
 
     return h
 
-## Do we need this for what we need so far?
+## Add the following functions if needed later
 # hex to 1D array 
 # 1D array to hex
 # hex to 2D array
 # 2D array to hex
  
-## Stuff from George's example
+## Stuff from George's example, used for scan.bufferget and scan.framedatagrab, don't mess with it for now
 def int2byte(val, size = None):
     ''' Function to convert ints to byte strings
     '''
@@ -129,6 +129,7 @@ def int2byte(val, size = None):
     
     return h
 
+# Function from George's example (I'm sure I can replace this later on)
 def hex2int(s):
     ''' Function to convert hex strings to 32 bit integers
     '''
@@ -147,6 +148,7 @@ def hex2int(s):
     # Dereference the pointer to get the float
     return fp.contents.value
 
+# Helper function for creating headers
 def create_header(name, body_size):
     ''' Command for constructing a header for sending a TCP request message
     
@@ -166,10 +168,16 @@ def create_header(name, body_size):
     
     return header
 
-## Commands proper
+##########################################################
+#      The TCP Commands Proper implemented as Functions  #
+##########################################################
+#
 # Note, every integer/float/double byte representation is in big-endian representation
 
-### Bias
+
+###########
+#  Bias   #
+###########
 # Bias.Set
 def bias_set(client, bias_val):
     ''' Command for setting bias voltage
@@ -213,8 +221,9 @@ def bias_get(client):
     
     return bias_val
     
-### Current
-
+####################
+#     Current      #
+####################
 # Current.Get
 def current_get(client):
     ''' Command to get the tunneling current value
@@ -239,7 +248,9 @@ def current_get(client):
     
     return current_val
     
-### Z-Controller
+######################
+#   Z-Controller     #
+######################
 # ZCtrl.OnOffGet
 def zctrl_onoffget(client):
     ''' Command to get whether or not Z-Controller is on or off
@@ -359,13 +370,9 @@ def zctrl_withdraw(client, wait, timeout):
     client.sock.send(message)
     reply = client.sock.recv(1024)
 
-### Scan
-class ScanData():
-    def __init__(self):
-        data = np.array([])
-        channels = 0
-        lines = 0
-        pixels = 0
+############################
+#         Scan             #
+############################
 
 # Scan.Action
 def scan_action(client, action, direction):
@@ -541,9 +548,9 @@ def scan_bufferget(client):
     reply = client.sock.recv(1024)
     
     # Converting number of channels, number of pixels, and lines to 
-    num_channels = hex2int(reply[40:44])
-    pixels = hex2int(reply[44 + num_channels*4: 48 + num_channels*4])
-    lines = hex2int(reply[48 + num_channels*4: 52 + num_channels*4])
+    num_channels = hex2integer(reply[40:44])
+    pixels = hex2integer(reply[44 + num_channels*4: 48 + num_channels*4])
+    lines = hex2integer(reply[48 + num_channels*4: 52 + num_channels*4])
     
     return num_channels, pixels, lines
     
@@ -594,9 +601,9 @@ def scan_framedatagrab(client, chan, direc, lines, pixels, send_response = 1):
     data_size = 4*lines*pixels
     reply = client.sock.recv(data_size + 1024)
     
-    # Grab size of body and channel name string -- need this to calculat4e position where scan data block starts
-    body_size = hex2int(reply[32:36])
-    name_size = hex2int(reply[40:44])
+    # Grab size of body and channel name string -- need this to calculate position where scan data block starts
+    body_size = hex2integer(reply[32:36])
+    name_size = hex2integer(reply[40:44])
     
     # Making sure whole message was gotten :>
     while len(reply) < body_size:
