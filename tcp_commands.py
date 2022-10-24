@@ -5,7 +5,7 @@
     Juwan Jeremy Jacobe
     University of Notre Dame
     
-    Last Updated: 14 Oct 2022
+    Last Updated: 24 Oct 2022
 '''
 
 import numpy as np
@@ -635,9 +635,93 @@ def folme_xyposset(client, x, y, wait_end_of_move):
     reply = client.sock.recv(1024)
 
 # FolME.XYPosGet
+def folme_xyposget(client, wait_for_new):
+    ''' Returns the X, Y tip coordinates (oversampled during the Acquisition Period time, Tap)
+
+    Args:
+        client (Nanonis.client)
+        wait_for_new (unsigned int32): selects whether the function returns the next
+        available signal value or if it waits for a full period of new data. If 0, function returns a value 0 to Tap
+        seconds after being called. If 1, the function discards the first oversampled signal value received but
+        returns the second value received. Thus the function returns a value Tap to 2*Tap seconds 
+        after being called
+
+    Returns:
+        X (float64): current X position of the tip
+        Y (float64): current Y position of the tip
+    '''
+
+    name = b'FolMe.XYPosGet'
+
+    header = create_header(name, body_size = 4)
+    body = unsignedint2hex(wait_for_new)
+    message = header + body
+
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
+
+    x, y = hex2double(reply[40:48]), hex2double(reply[48:56])
+
+    return x, y
 
 # FolMe.SpeedSet
+def folme_speedset(client, speed, custom_speed_mod):
+    ''' Configures the tip speed when moving in Follow Me mode
+
+    Args:
+        client (Nanonis.client)
+        speed (float32): sets the surface speed in Follow Me mode (m/s)
+        custom_speed_mod (unsigned int32): sets whether the custom speed setting is used for
+        Follow Me mode (=1) or if scan is used (=0)
+    '''
+
+    name = b'FolMe.SpeedSet'
+
+    header = create_header(name, body_size = 8)
+    body = float2hex(speed) + unsignedint2hex(custom_speed_mod)
+    message = header + body
+
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
 
 # FolMe.SpeedGet
+def folme_speedget(client):
+    ''' Returns the tip speed when moving in Follow Me mode
+
+    Args:
+        client (Nanonis.client)
+
+    Returns:
+        speed (float32): surface speed in Follow Me mode (m/s)
+        custom_speed_mod (unsigned int32): returns whether custom speed setting is used for Follow
+        Me mode (=1) or if scan speed is used (=0)
+    '''
+
+    name = b'FolMe.SpeedGet'
+
+    header = create_header(name, body_size = 0)
+    message = header
+
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
+
+    speed = hex2float(reply[40:44])
+    custom_speed_mod = hex2unsignedint(reply[44:48])
+
+    return speed, custom_speed_mod
 
 # FolMe.Stop
+def folme_stop(client):
+    ''' Stops the tip movement in Follow Me mode
+
+    Args:
+        client (Nanonis.client)
+    '''
+
+    name = b'FolMe.Stop'
+
+    header = create_header(name, body_size = 0)
+    message = header
+
+    client.sock.send(message)
+    reply = client.sock.recv(1024)
