@@ -9,24 +9,11 @@
 '''
 
 import numpy as np
-import bitstring
 import struct
-from ctypes import *
 
-## Helper Functions -- need to test them to make sure they work as intended
-def append_command(command, len_max):
-    ''' Function for appending byte string with empty bytes (b'\x00') until byte string
-    reaches desired length
-    '''
-    
-    new_command = command
-    
-    # Append with 0's until len_max is reached
-    while (len(new_command) < len_max):
-        new_command = new_command + b'\x00'
-        
-    return new_command
-
+###############################################
+# Data Structure to Byte Conversion Functions #       
+###############################################
 # float to hex
 def float2hex(f_val):
     h = struct.pack('>f', f_val)
@@ -117,6 +104,21 @@ def hex2short(hex_string):
 # 1D array to hex
 # hex to 2D array
 # 2D array to hex
+
+# Function for padding hex strings
+def append_command(command, len_max):
+    ''' Function for appending byte string with empty bytes until byte string
+    reaches desired length
+    '''
+    
+    # Copy to new variable
+    new_command = command
+    
+    # Append with 0's until len_max is reached
+    while (len(new_command) < len_max):
+        new_command = new_command + b'\x00'
+        
+    return new_command
 
 # Helper function for creating headers
 def create_header(name, body_size):
@@ -334,7 +336,7 @@ def zctrl_withdraw(client, wait, timeout):
     name = b'ZCtrl.Withdraw'
     
     header = create_header(name, body_size = 8)
-    body = unsignedint2hex(wait) + int2byte(timeout)
+    body = unsignedint2hex(wait) + integer2hex(timeout)
     message = header + body
     
     client.sock.send(message)
