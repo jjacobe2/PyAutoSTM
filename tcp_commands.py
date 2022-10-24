@@ -105,48 +105,6 @@ def integer2hex(integer):
 # 1D array to hex
 # hex to 2D array
 # 2D array to hex
- 
-## Stuff from George's example, used for scan.bufferget and scan.framedatagrab, don't mess with it for now
-def int2byte(val, size = None):
-    ''' Function to convert ints to byte strings
-    '''
-    if size == 16:
-        # 16 bit, strip the 0x part
-        msg_hex = f"{val:0{4}x}"
-    
-    else:
-        # 32 bit (default), strip the 0x part
-        msg_hex = f"{val:0{8}x}"
-    
-    # Define h as an array with size = number of bytes of the full message
-    size = int(len(msg_hex)/2)
-    h = bytearray(size)
-    
-    # Fill h array with the hex bytes
-    for k in range(size):
-        t = bitstring.BitArray(hex = msg_hex[2*k:2*k+2])
-        h[k] = t.uint # Converts the bit array to uint, unsigned 
-    
-    return h
-
-# Function from George's example (I'm sure I can replace this later on)
-def hex2int(s):
-    ''' Function to convert hex strings to 32 bit integers
-    '''
-    
-    h_string = str(s.hex())
-    
-    # Convert from hex to Python int
-    i = int(h_string, 16)
-    
-    # Makes Python int to a C integer
-    cp = pointer(c_int32(i))
-    
-    # Type cast int pointer to a float pointer
-    fp = cast(cp, POINTER(c_int32))
-    
-    # Dereference the pointer to get the float
-    return fp.contents.value
 
 # Helper function for creating headers
 def create_header(name, body_size):
@@ -591,7 +549,7 @@ def scan_framedatagrab(client, chan, direc, lines, pixels, send_response = 1):
     name = b'Scan.FrameDataGrab'
     header = create_header(name, body_size = 8)
     
-    body = int2byte(chan) + int2byte(direc)
+    body = integer2hex(chan) + integer2hex(direc)
     
     message = header + body
     
@@ -616,8 +574,9 @@ def scan_framedatagrab(client, chan, direc, lines, pixels, send_response = 1):
     
     return data
 
-## Follow Me
-
+#############################
+#      Follow Me            #
+#############################
 # FolMe.XYPosSet
 def folme_xyposset(client, x, y, wait_end_of_move):
     ''' Moves the tip to specified X and Y target coordinates (in meters). Moves at

@@ -14,7 +14,6 @@ import tcp_commands as tcp
 # External imports 
 import numpy as np
 import socket
-from ctypes import *
 import matplotlib.pyplot as plt
 
 class Nanonis:
@@ -36,7 +35,7 @@ if __name__ == "__main__":
     client = Nanonis()
     client.connect()
     
-    num_channels, pixels, lines = tcp.get_scan_buffer(client)
+    num_channels, pixels, lines = tcp.scan_bufferget(client)
     chan = 0
     data = tcp.scan_framedatagrab(client, chan, 1, lines, pixels)
     plt.imshow(data, cmap = 'hot')
