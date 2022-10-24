@@ -100,6 +100,18 @@ def integer2hex(integer):
 
     return h
 
+# short to hex
+def short2hex(short):
+    h = struct.pack('>h', short)
+
+    return h
+
+# hex to short
+def hex2short(hex_string):
+    short_val = struct.unpack('>h', hex_string)
+
+    return short_val[0]
+
 ## Add the following functions if needed later
 # hex to 1D array 
 # 1D array to hex
@@ -120,9 +132,9 @@ def create_header(name, body_size):
     
     header = append_command(name, 32)
     
-    header = header + int2byte(body_size, size = 32)
-    header = header + int2byte(1, size = 16) # set response to true
-    header = header + int2byte(0, size = 16) # filler
+    header = header + integer2hex(body_size)
+    header = header + short2hex(1) # set response to true
+    header = header + short2hex(0) # filler
     
     return header
 
