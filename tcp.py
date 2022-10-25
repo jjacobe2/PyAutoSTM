@@ -1,4 +1,4 @@
-''' PyAutoSTM
+''' tcp.py --- PyAutoSTM
 
     Main module containing Nanonis TCP client class, for automating control of STM, with methods to handle
     TCP communication between the Python script and the Nanonis SPM Controller v5
@@ -717,8 +717,6 @@ class Nanonis(Commands):
         self.sock.close()
 
 if __name__ == "__main__":
-    import tcp_commands as tcp
-
     stm = Nanonis()
     stm.connect()
     
