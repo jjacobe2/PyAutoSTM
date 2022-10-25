@@ -39,4 +39,4 @@ class STMMap:
         self.init_config = assignment_alg(self.all_molecules, self.final_config)
 
 if __name__ == "__main__":
-    print('Integrating this seems tuffer than I initially though :(')
+    pass
