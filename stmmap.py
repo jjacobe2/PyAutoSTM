@@ -93,9 +93,10 @@ class STMMap:
         points_x = points_arr[:, 0]
         points_y = points_arr[:, 1]
 
+        print(points_x)
         # Change x, y --> pixel number
-        pixel_x = int((points_x - self.top_left_x * np.ones(points_x.shape)) / self.dx )
-        pixel_y = int((self.top_left_x * np.ones(points_x.shape) - points_y) / self.dy )
+        pixel_x = np.array((points_x - self.top_left_x * np.ones(points_x.shape)) / self.dx).astype(int)
+        pixel_y = np.array(((self.top_left_y * np.ones(points_x.shape) - points_y) / self.dy )).astype(int)
 
         pixel_arr = np.stack((pixel_y, pixel_x), axis = -1)
 

@@ -1,6 +1,6 @@
-''' Module implementing a star path finding algorithm
+''' Module implementing astar path finding algorithm
 
-    Need to find where I got this from to credit it bruh
+    Code from https://medium.com/@nicholas.w.swift/easy-a-star-pathfinding-7e6689c7f7b2
 '''
 
 import numpy as np
