@@ -142,19 +142,38 @@ def automation_main(molecule_R, final_R, centX, centY, width, height):
 
     t0 = time.time()
 
+    fig, axes = plt.subplots(1, 2, figsize = (10, 5))
+
+    # Visualize image
+    axes[0].set_title('Binary image representation')
+    axes[0].imshow(stm_img.raw_image)
+
+    # Visualize physical coordinates of molecules + coordinates of goal configuration
+    axes[1].set_title('Physical representation')
+    axes[1].scatter(stm_img.all_molecules[:, 0], stm_img.all_molecules[:, 1])
+    axes[1].scatter(stm_img.assigned_final_config[:,0], stm_img.assigned_final_config[:, 1])
+    axes[1].set_xlim(centX - width/2, centY + width/2)
+    axes[1].set_ylim(centY - height/2, centY + height/2)
+    plt.show()
+
     # Start of primary loop for controlling
     for i in np.arange(stm_img.assigned_init_config.shape[0]):
         
-
-        stm_img_image = stm_img.raw_image
         # Right now current astar implementation is finicky
         # stm_img_image = np.zeros(stm_img.raw_image.shape)
+        stm_img_image = stm_img.raw_image
+
+        # Show image before manipulation
+        fig, axes = plt.subplots(1, 1)
+        axes.imshow(stm_img_image, cmap = 'gray_r')
+        axes.set_title(f'Image before manipulation {i}')
+        plt.show()
 
         # Find path from current position to molecule to be moved
         curr_pos = stm.folme_xyposget(wait_for_new = 1)
         curr_pos = np.array([[curr_pos[0], curr_pos[1]]])
         pixel_start = stm_img.point2pixel(curr_pos)
-        pixel_imol_loc = stm_img.point2pixel(np.array([stm_img.assigned_init_config[i, :]]))
+        pixel_imol_loc = stm_img.point2pixel(np.array([stm_img.assigned_init_config[i, :]]))[0] # Take 0th element as we only want a 2 vector but gives us 1 x 2 array
 
         # Don't actually take path finding into account for this step -- only needs to be taken to account when manipulating molecule
         pixel_path_arr_starttoi = astar.find_path_array(np.zeros(stm_img.raw_image.shape), 1, pixel_start, pixel_imol_loc)
@@ -163,13 +182,22 @@ def automation_main(molecule_R, final_R, centX, centY, width, height):
         V_arr, I_arr, z_arr, pos_arr, t_arr = follow_path(stm, stm_img, pixel_path_arr_starttoi, V_arr, I_arr, z_arr, pos_arr, t_arr, t0 = t0)
 
         # Find path from initial to final
-        pixel_fmol_loc = stm_img.point2pixel(np.array([stm_img.assigned_final_config[i, :]]))
+        pixel_fmol_loc = stm_img.point2pixel(np.array([stm_img.assigned_final_config[i, :]]))[0] # Take 0th element as we only want a 2 vector but gives us 1 x 2 array
         stm_img_image = annihilate_square_blob(stm_img_image, pixel_imol_loc[0], pixel_imol_loc[1]) # Take molecule we're working with in map/image for path finding purposes
         pixel_path_arr_itof = astar.find_path_array(stm_img_image, 1, pixel_imol_loc, pixel_fmol_loc)
 
+
+        # Show path to move it
+        stm_img_image_copy = stm_img_image.copy()
+        for coord in pixel_path_arr_itof:
+            stm_img_image_copy[coord[0], coord[1]] = 1
+        axes.imshow(stm_img_image_copy, cmap = 'gray_r')
+        axes.set_title(f'Path from i to f from manipulation {i}')
+        plt.show()
+
         # Update map/image now that molecule has been move
         stm_img_image = generate_square_blob(stm_img_image, pixel_fmol_loc[0], pixel_fmol_loc[1])
-        
+
         # Change settings to manipulation mode
         stm.bias_set(BIAS_MANIP)
         stm.zctrl_setpntset(SETPOINT_MANIP)
@@ -181,6 +209,11 @@ def automation_main(molecule_R, final_R, centX, centY, width, height):
         # Set back to scanning mode
         stm.bias_set(BIAS_SCAN)
         stm.folme_speedset(10e-9, custom_speed_mod = 0) # Use scanning speed
+
+        # Show image after manipulation
+        axes.imshow(stm_img_image, cmap = 'gray_r')
+        axes.set_title(f'Image after manipulation {i}')
+        plt.show()
 
     return stm_img
 
@@ -194,13 +227,8 @@ if __name__ == "__main__":
     height = 20e-9
 
     stm_img = automation_main(molecule_R, final_R, centX, centY, width, height)
-    print(stm_img.all_molecules)
-    print(stm_img.point2pixel(stm_img.all_molecules))
 
-    image = annihilate_square_blob(stm_img.raw_image, 9, 20)
-    plt.imshow(image)
-    plt.show()
-
+    '''
     fig, axes = plt.subplots(1, 2, figsize = (10, 5))
 
     # Visualize image
@@ -215,4 +243,5 @@ if __name__ == "__main__":
     axes[1].set_ylim(centY - height/2, centY + height/2)
 
     plt.show()
+    '''
     
