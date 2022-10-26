@@ -172,7 +172,7 @@ def automation_main(molecule_R, final_R, centX, centY, width, height):
         # Find path from current position to molecule to be moved
         curr_pos = stm.folme_xyposget(wait_for_new = 1)
         curr_pos = np.array([[curr_pos[0], curr_pos[1]]])
-        pixel_start = stm_img.point2pixel(curr_pos)
+        pixel_start = stm_img.point2pixel(curr_pos)[0]
         pixel_imol_loc = stm_img.point2pixel(np.array([stm_img.assigned_init_config[i, :]]))[0] # Take 0th element as we only want a 2 vector but gives us 1 x 2 array
 
         # Don't actually take path finding into account for this step -- only needs to be taken to account when manipulating molecule
@@ -190,7 +190,7 @@ def automation_main(molecule_R, final_R, centX, centY, width, height):
         # Show path to move it
         stm_img_image_copy = stm_img_image.copy()
         for coord in pixel_path_arr_itof:
-            stm_img_image_copy[coord[0], coord[1]] = 1
+            stm_img_image_copy[int(coord[0]), int(coord[1])] = 1
         axes.imshow(stm_img_image_copy, cmap = 'gray_r')
         axes.set_title(f'Path from i to f from manipulation {i}')
         plt.show()
