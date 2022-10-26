@@ -13,6 +13,8 @@ from utils.assignment import assignment
 
 # Class handling data regarding an STM scan
 class STMMap:
+    ''' Class handling data regarding the primary STM scan and locations of molecules on the STM scan
+    '''
     def __init__(self, image_data, centX, centY, width, height, angle):
         self.raw_image = image_data
         self.centX = centX
@@ -65,8 +67,8 @@ class STMMap:
         '''
         
         # Grab pixel_x and pixel_y as separate Nx1 array from pixel_arr
-        pixel_x = pixel_arr[:, 0]
-        pixel_y = pixel_arr[:, 1]
+        pixel_x = pixel_arr[:, 1]
+        pixel_y = pixel_arr[:, 0]
 
         # Change pixel number ---> x and y
         points_x = self.top_left_x * np.ones(pixel_x.shape) + self.dx * pixel_x
@@ -95,7 +97,7 @@ class STMMap:
         pixel_x = int((points_x - self.top_left_x * np.ones(points_x.shape)) / self.dx )
         pixel_y = int((self.top_left_x * np.ones(points_x.shape) - points_y) / self.dy )
 
-        pixel_arr = np.stack((pixel_x, pixel_y), axis = -1)
+        pixel_arr = np.stack((pixel_y, pixel_x), axis = -1)
 
         return pixel_arr
 

@@ -235,6 +235,27 @@ class ZCtrl():
     def __init__(self, sock):
         self.sock = sock
 
+    # ZCtrl.ZPosGet
+    def zctrl_zposget(self):
+        ''' Command to get current Z position the tip
+
+        Returns:
+            z (float32): (m)
+        '''
+
+        name = b'ZCtrl.ZPosGet'
+
+        header = create_header(name, body_size = 0)
+        message = header
+
+        self.sock.send(message)
+        reply = self.sock.recv(1024)
+
+        # Read body for z
+        z = hex2float(reply[40:44])
+
+        return z
+        
     # ZCtrl.OnOffGet
     def zctrl_onoffget(self):
         ''' Command to get whether or not Z-Controller is on or off
