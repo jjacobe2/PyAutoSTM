@@ -130,6 +130,7 @@ def automation_main(molecule_R, final_R, centX, centY, width, height):
 
     # Initialize settings of scan
     stm.bias_set(BIAS_SCAN)
+    stm.zctrl_setpntset(SETPOINT_SCAN)
     stm.folme_speedset(10e-9, custom_speed_mod = 0) # Use scanning speed
     stm.zctrl_onoffset(1) # Turn on
 
@@ -155,13 +156,21 @@ def automation_main(molecule_R, final_R, centX, centY, width, height):
     axes[1].set_xlim(centX - width/2, centY + width/2)
     axes[1].set_ylim(centY - height/2, centY + height/2)
     plt.show()
-
+    
+    # Right now current astar implementation is finicky
+    # stm_img_image = np.zeros(stm_img.raw_image.shape)
+    stm_img_image = stm_img.raw_image
+    
+    obstacles1 = [[20, 40], [40, 40], [80, 40], [60, 40], [100, 40], [120, 40], [140, 40], [160, 40], [180, 40]]
+    obstacles2 = [[10, 60], [30, 60], [70, 60], [50, 60], [90, 60], [110, 60], [130, 60], [150, 60], [170, 60]]
+    obstacles3 = [[20, 140], [40, 140], [80, 140], [60, 140], [100, 140], [120, 140], [140, 140], [160, 140], [180, 140]]
+    obstacles = obstacles1 + obstacles2 + obstacles3
+    
+    for obstacle in obstacles:
+        stm_img_image = generate_square_blob(stm_img_image, obstacle[0], obstacle[1])
+        
     # Start of primary loop for controlling
     for i in np.arange(stm_img.assigned_init_config.shape[0]):
-        
-        # Right now current astar implementation is finicky
-        # stm_img_image = np.zeros(stm_img.raw_image.shape)
-        stm_img_image = stm_img.raw_image
 
         # Show image before manipulation
         fig, axes = plt.subplots(1, 1)
@@ -172,7 +181,7 @@ def automation_main(molecule_R, final_R, centX, centY, width, height):
         # Find path from current position to molecule to be moved
         curr_pos = stm.folme_xyposget(wait_for_new = 1)
         curr_pos = np.array([[curr_pos[0], curr_pos[1]]])
-        pixel_start = stm_img.point2pixel(curr_pos)
+        pixel_start = stm_img.point2pixel(curr_pos)[0]
         pixel_imol_loc = stm_img.point2pixel(np.array([stm_img.assigned_init_config[i, :]]))[0] # Take 0th element as we only want a 2 vector but gives us 1 x 2 array
 
         # Don't actually take path finding into account for this step -- only needs to be taken to account when manipulating molecule
@@ -184,13 +193,29 @@ def automation_main(molecule_R, final_R, centX, centY, width, height):
         # Find path from initial to final
         pixel_fmol_loc = stm_img.point2pixel(np.array([stm_img.assigned_final_config[i, :]]))[0] # Take 0th element as we only want a 2 vector but gives us 1 x 2 array
         stm_img_image = annihilate_square_blob(stm_img_image, pixel_imol_loc[0], pixel_imol_loc[1]) # Take molecule we're working with in map/image for path finding purposes
-        pixel_path_arr_itof = astar.find_path_array(stm_img_image, 1, pixel_imol_loc, pixel_fmol_loc)
-
+        
+        stm_img_image_map = stm_img_image.copy()
+        for py in range(stm_img_image.shape[1]):
+            for px in range(stm_img_image.shape[0]):
+                if stm_img_image[py, px] == 1:
+                    stm_img_image_map[py - 1, px] = 1
+                    stm_img_image_map[py + 1, px] = 1
+                    stm_img_image_map[py, px - 1] = 1
+                    stm_img_image_map[py, px + 1] = 1
+                    stm_img_image_map[py - 1, px - 1] = 1
+                    stm_img_image_map[py + 1, px - 1] = 1
+                    stm_img_image_map[py + 1, px - 1] = 1
+                    stm_img_image_map[py - 1, px + 1] = 1
+                    
+        pixel_path_arr_itof = astar.find_path_array(stm_img_image_map, 1, pixel_imol_loc, pixel_fmol_loc)
 
         # Show path to move it
         stm_img_image_copy = stm_img_image.copy()
+        
         for coord in pixel_path_arr_itof:
-            stm_img_image_copy[coord[0], coord[1]] = 1
+            stm_img_image_copy[int(coord[0]), int(coord[1])] = 1
+        stm_img_image_copy = generate_square_blob(stm_img_image_copy, int(pixel_path_arr_itof[0, 0]), int(pixel_path_arr_itof[0, 1]))
+        fig, axes = plt.subplots(1, 1)
         axes.imshow(stm_img_image_copy, cmap = 'gray_r')
         axes.set_title(f'Path from i to f from manipulation {i}')
         plt.show()
@@ -208,9 +233,11 @@ def automation_main(molecule_R, final_R, centX, centY, width, height):
 
         # Set back to scanning mode
         stm.bias_set(BIAS_SCAN)
+        stm.zctrl_setpntset(SETPOINT_SCAN)
         stm.folme_speedset(10e-9, custom_speed_mod = 0) # Use scanning speed
 
         # Show image after manipulation
+        fig, axes = plt.subplots(1, 1)
         axes.imshow(stm_img_image, cmap = 'gray_r')
         axes.set_title(f'Image after manipulation {i}')
         plt.show()
@@ -219,7 +246,7 @@ def automation_main(molecule_R, final_R, centX, centY, width, height):
 
 if __name__ == "__main__":
 
-    molecule_R = np.array([[10, 20], [100, 200], [200, 200], [50, 190]])
+    molecule_R = np.array([[10, 20], [100, 200], [200, 200], [50, 190], [10, 40]])
     final_R = np.array([[120, 120], [140, 120], [130, 110], [130, 130]])
     centX = 0
     centY = 0
