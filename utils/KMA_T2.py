@@ -9,15 +9,14 @@ import matplotlib.pyplot as plt
 
 class MakeCostMatrix():
     
-    def __init__(self):
-        self.rs = np.random.randint(0,1000,(N,2))
-        self.rd = np.random.randint(300,600,(N,2))
+    def __init__(self, init_positions, goal_positions):
+        self.rs = init_positions
+        self.rd = goal_positions
         self.dm = np.zeros((np.shape(self.rs)[0],np.shape(self.rd)[0]))
         
     def calculate(self):
         for i in range(np.shape(self.rs)[0]):
             for j in range(M):
-                #self.dm[i][j]=1000-(abs(self.rs[i][0]-self.rd[j][0])+abs(self.rs[i][1]-self.rd[j][1]))  
                 #Calculate distance
                 self.dm[i][j]=1000-round(np.sqrt((self.rs[i][0]-self.rd[j][0])**2+(self.rs[i][1]-self.rd[j][1])**2))
             for j in range(M,np.shape(self.rd)[0]):
@@ -43,6 +42,7 @@ def find_path(i, visited_left, visited_right, slack_right):
 
 def KM():
     m = len(graph)
+
     for i in range(m):
         slack_right = [float('inf') for _ in range(m)]
         while True:
@@ -64,9 +64,15 @@ def KM():
 
 if __name__ == '__main__':   
     t0 = time.time()
-    N=100
-    M=30
-    costm=MakeCostMatrix()
+    N=2
+    M=1
+    init_config = 1000*np.random.rand(N, 2)
+    final_config = 1000*np.random.rand(M, 2)
+
+    #init_config = np.random.randint(0, 10, (N, 2))
+    #final_config = np.random.randint(3, 6, (N, 2))
+
+    costm=MakeCostMatrix(init_config, final_config)
     print("rs=\n",costm.rs)
     print("rd=\n",costm.rd)
     costm.calculate()

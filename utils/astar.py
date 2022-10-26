@@ -184,3 +184,18 @@ def search(maze, cost, start, end):
 
             # Add the child to the yet_to_visit list
             yet_to_visit_list.append(child)
+
+def find_path_array(maze, cost, start, end):
+    ''' Convert tuples_list outputted by search as an Nx2 array of pixels, where first column is pixel y is seoncd column is pixel x
+    '''
+    tuples_list = search(maze, cost, start, end)
+
+    path_arr = np.zeros((len(tuples_list), 2))
+
+    for i, node in enumerate(tuples_list):
+        path_arr[i, 0] = node[0]
+        path_arr[i, 1] = node[1]
+
+    return path_arr
+
+
