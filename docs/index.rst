@@ -17,4 +17,7 @@ arising from these many body configurations.
 
 :Email:
     jjacobe2@nd.edu
+	
+.. toctree::
+   :maxdepth: 2
 
