@@ -143,7 +143,7 @@ def automation_main(molecule_R, final_R, centX, centY, width, height, obstacles,
             axes.imshow(stm_img_image, cmap = 'gray_r')
             axes.set_title(f'Image before manipulation {i}')
             plt.show()
-
+            
         # Find path from current position to molecule to be moved
         curr_pos = stm.folme_xyposget(wait_for_new = 1)
         curr_pos = np.array([[curr_pos[0], curr_pos[1]]])
