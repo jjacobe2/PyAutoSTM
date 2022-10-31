@@ -61,16 +61,17 @@ def follow_path(tcp_client : Nanonis, stm_map : STMMap, path_arr : list, V_arr :
 
     return V_arr, I_arr, z_arr, pos_arr, t_arr
 
-def automation_main(molecule_R, final_R, centX, centY, width, height):
+def automation_main(molecule_R, final_R, centX, centY, width, height, obstacles, plot_img = False):
     ''' Run the process of automation for given test described in header docstring
 
     Args:
         molecule_R (np.ndarray): array of 2D positions of molecules, in pixel coordinates (y, x)
-        final_R (np.ndarray): array of 2D positions of desired final configuration, in pixel coordiantes (y, x)
+        final_R (np.ndarray): array of 2D positions of desired final configuration, in pixel coordinates (y, x)
         centX (float): x coordinate of center of scan frame (m)
         centY (float): y coordinate of center of scan frame (m)
         width (float): width of scan frame (m)
         height (float): height of scan frame (m)
+        obstacles (np.ndarray): array of 2D positions of center of square blob ostacles, in pixel coordinates (y, x)
 
     Returns:
         stm_img (STMMap): the STMMap object representing the initial configuration + scan frame configuration
@@ -107,31 +108,29 @@ def automation_main(molecule_R, final_R, centX, centY, width, height):
     t_arr = []
     pos_arr = []
 
+    # Get starting time
     t0 = time.time()
 
-    fig, axes = plt.subplots(1, 2, figsize = (10, 5))
+    # Plot representative binary image if argument is true
+    if plot_img:
+        fig, axes = plt.subplots(1, 2, figsize = (10, 5))
 
-    # Visualize image
-    axes[0].set_title('Binary image representation')
-    axes[0].imshow(stm_img.raw_image)
+        # Visualize image
+        axes[0].set_title('Binary image representation')
+        axes[0].imshow(stm_img.raw_image)
 
-    # Visualize physical coordinates of molecules + coordinates of goal configuration
-    axes[1].set_title('Physical representation')
-    axes[1].scatter(stm_img.all_molecules[:, 0], stm_img.all_molecules[:, 1])
-    axes[1].scatter(stm_img.assigned_final_config[:,0], stm_img.assigned_final_config[:, 1])
-    axes[1].set_xlim(centX - width/2, centY + width/2)
-    axes[1].set_ylim(centY - height/2, centY + height/2)
-    plt.show()
+        # Visualize physical coordinates of molecules + coordinates of goal configuration
+        axes[1].set_title('Physical representation')
+        axes[1].scatter(stm_img.all_molecules[:, 0], stm_img.all_molecules[:, 1])
+        axes[1].scatter(stm_img.assigned_final_config[:,0], stm_img.assigned_final_config[:, 1])
+        axes[1].set_xlim(centX - width/2, centY + width/2)
+        axes[1].set_ylim(centY - height/2, centY + height/2)
+        plt.show()
     
     # Right now current astar implementation is finicky
-    # stm_img_image = np.zeros(stm_img.raw_image.shape)
     stm_img_image = stm_img.raw_image
     
-    obstacles1 = [[20, 40], [40, 40], [80, 40], [60, 40], [100, 40], [120, 40], [140, 40], [160, 40], [180, 40]]
-    obstacles2 = [[10, 60], [30, 60], [70, 60], [50, 60], [90, 60], [110, 60], [130, 60], [150, 60], [170, 60]]
-    obstacles3 = [[20, 140], [40, 140], [80, 140], [60, 140], [100, 140], [120, 140], [140, 140], [160, 140], [180, 140]]
-    obstacles = obstacles1 + obstacles2 + obstacles3
-    
+    # Create square blob obstacles
     for obstacle in obstacles:
         stm_img_image = generate_square_blob(stm_img_image, obstacle[0], obstacle[1])
         
@@ -150,18 +149,21 @@ def automation_main(molecule_R, final_R, centX, centY, width, height):
         pixel_start = stm_img.point2pixel(curr_pos)[0]
         pixel_imol_loc = stm_img.point2pixel(np.array([stm_img.assigned_init_config[i, :]]))[0] # Take 0th element as we only want a 2 vector but gives us 1 x 2 array
 
-        # Don't actually take path finding into account for this step -- only needs to be taken to account when manipulating molecule
+        # Don't actually take path finding on the stm graph (i.e. the binarized image) into account for this step
+        # Only need to do proper path finding when manipulating molecule
         pixel_path_arr_starttoi = astar.find_path_array(np.zeros(stm_img.raw_image.shape), 1, pixel_start, pixel_imol_loc)
 
         # Move to initial molecule
         V_arr, I_arr, z_arr, pos_arr, t_arr = follow_path(stm, stm_img, pixel_path_arr_starttoi, V_arr, I_arr, z_arr, pos_arr, t_arr, t0 = t0)
 
-        # Find path from initial to final
+        # Modify map by removing the molecule to be moved from the map in order to not consider it for path finding
         pixel_fmol_loc = stm_img.point2pixel(np.array([stm_img.assigned_final_config[i, :]]))[0] # Take 0th element as we only want a 2 vector but gives us 1 x 2 array
         stm_img_image = annihilate_square_blob(stm_img_image, pixel_imol_loc[0], pixel_imol_loc[1]) # Take molecule we're working with in map/image for path finding purposes
         
+        # Create a separate variable to store the stm binarized image and copy it
         stm_img_image_map = stm_img_image.copy()
 
+        # Enlarge the blobs 
         for py in range(stm_img_image.shape[1]):
             for px in range(stm_img_image.shape[0]):
                 if stm_img_image[py, px] == 1:
@@ -174,18 +176,26 @@ def automation_main(molecule_R, final_R, centX, centY, width, height):
                     stm_img_image_map[py + 1, px - 1] = 1
                     stm_img_image_map[py - 1, px + 1] = 1
                     
+        # Find path from molecule to final location it will be placed
         pixel_path_arr_itof = astar.find_path_array(stm_img_image_map, 1, pixel_imol_loc, pixel_fmol_loc)
 
-        # Show path to move it
-        stm_img_image_copy = stm_img_image.copy()
         
-        for coord in pixel_path_arr_itof:
-            stm_img_image_copy[int(coord[0]), int(coord[1])] = 1
-        stm_img_image_copy = generate_square_blob(stm_img_image_copy, int(pixel_path_arr_itof[0, 0]), int(pixel_path_arr_itof[0, 1]))
-        fig, axes = plt.subplots(1, 1)
-        axes.imshow(stm_img_image_copy, cmap = 'gray_r')
-        axes.set_title(f'Path from i to f from manipulation {i}')
-        plt.show()
+        # If plotting, show path
+        if plot_img:
+
+            # Create a new copy of stm map to draw path on
+            stm_img_image_path = stm_img_image.copy()    
+
+            # Activate pixels of path
+            for coord in pixel_path_arr_itof:
+                stm_img_image_path[int(coord[0]), int(coord[1])] = 1
+
+            # Redraw molecule that was erased and then plot
+            stm_img_image_path = generate_square_blob(stm_img_image_path, int(pixel_path_arr_itof[0, 0]), int(pixel_path_arr_itof[0, 1]))
+            fig, axes = plt.subplots(1, 1)
+            axes.imshow(stm_img_image_path, cmap = 'gray_r')
+            axes.set_title(f'Path from i to f from manipulation {i}')
+            plt.show()
 
         # Update map/image now that molecule has been move
         stm_img_image = generate_square_blob(stm_img_image, pixel_fmol_loc[0], pixel_fmol_loc[1])
@@ -210,10 +220,19 @@ def automation_main(molecule_R, final_R, centX, centY, width, height):
         plt.show()
 
     # Convert observed measurements to numpy arrays
+    for data_arr in [V_arr, I_arr, z_arr, pos_arr, t_arr]:
+        data_arr = np.array(data_arr)
 
     return stm_img, V_arr, I_arr, z_arr, pos_arr, t_arr
 
 if __name__ == "__main__":
+
+    # Create array of obstacles
+    obstacles1 = [[20, 40], [40, 40], [80, 40], [60, 40], [100, 40], [120, 40], [140, 40], [160, 40], [180, 40]]
+    obstacles2 = [[10, 60], [30, 60], [70, 60], [50, 60], [90, 60], [110, 60], [130, 60], [150, 60], [170, 60]]
+    obstacles3 = [[20, 140], [40, 140], [80, 140], [60, 140], [100, 140], [120, 140], [140, 140], [160, 140], [180, 140]]
+    obstacles = obstacles1 + obstacles2 + obstacles3
+    obstacles = np.array(obstacles)
 
     molecule_R = np.array([[10, 20], [100, 200], [200, 200], [50, 190], [10, 40]])
     final_R = np.array([[120, 120], [140, 120], [130, 110], [130, 130]])
@@ -222,8 +241,10 @@ if __name__ == "__main__":
     width = 20e-9
     height = 20e-9
 
-    stm_img = automation_main(molecule_R, final_R, centX, centY, width, height)
+    stm_img, V_arr, I_arr, z_arr, pos_arr, t_arr = automation_main(molecule_R, final_R, centX, centY, width, height, obstacles)
 
+    print(type(V_arr))
+    
     # Plot observed data vs time
 
     # Plot path of tip
