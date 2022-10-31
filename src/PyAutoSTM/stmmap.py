@@ -9,7 +9,7 @@
     Last modified: 24 Oct 2022
 '''
 import numpy as np
-from utils.assignment import assignment
+from autoutils.assignment import assignment
 
 # Class handling data regarding an STM scan
 class STMMap:
@@ -94,6 +94,7 @@ class STMMap:
         points_y = points_arr[:, 1]
 
         print(points_x)
+        
         # Change x, y --> pixel number
         pixel_x = np.array((points_x - self.top_left_x * np.ones(points_x.shape)) / self.dx).astype(int)
         pixel_y = np.array(((self.top_left_y * np.ones(points_x.shape) - points_y) / self.dy )).astype(int)

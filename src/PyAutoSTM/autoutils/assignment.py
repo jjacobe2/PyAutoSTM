@@ -2,6 +2,11 @@
 
     Module containing functions for implementing an assignment algorithm using 
     scipy.optimize.linear_sum_assignment
+
+    Juwan Jeremy Jacobe
+    University of Notre Dame
+
+    Last modified: 26 Oct 2022
 '''
 import numpy as np
 import matplotlib.pyplot as plt
@@ -72,18 +77,26 @@ if __name__ == "__main__":
     N = 20
     M = 10
 
-    init_R = np.random.rand(N, 2)
-    final_R = np.random.rand(M, 2)
+    init_R = 1.2*np.random.rand(N, 2)
+    #final_R = np.random.rand(M, 2)
+    final_R = np.array([[0.45, 0.55], [0.55, 0.55], [0.45, 0.45], [0.55, 0.45], [0.5, 0.5]])
 
     assigned_init_R, assigned_final_R = assignment(init_R, final_R)
 
+    fig = plt.figure()
+    axes = fig.add_subplot()
+
     # Draw initial and final as scattered points
-    plt.scatter(init_R[:, 0], init_R[:, 1])
-    plt.scatter(final_R[:, 0], final_R[:, 1])
+    axes.scatter(init_R[:, 0], init_R[:, 1], label = "Initial molecules")
+    axes.scatter(final_R[:, 0], final_R[:, 1], label = "Desired configuration")
 
     # Draw lines between assigned initial and its corresponding final
     for i in np.arange(0, assigned_init_R.shape[0], 1):
-        plt.plot([assigned_init_R[i, 0], assigned_final_R[i, 0]], [assigned_init_R[i, 1], assigned_final_R[i, 1]])
+        axes.plot([assigned_init_R[i, 0], assigned_final_R[i, 0]], [assigned_init_R[i, 1], assigned_final_R[i, 1]], color = "black")
 
-    plt.plot()
+    axes.set_xlim([0, 1])
+    axes.set_ylim([0, 1])
+    axes.set_aspect('equal')
+    plt.tight_layout()
+    plt.legend()
     plt.show()

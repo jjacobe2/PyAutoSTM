@@ -15,85 +15,35 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-import utils.astar as astar
+import autoutils.astar as astar
 
 from stmmap import STMMap
 from tcp import Nanonis
+from imgsim.basic_image import *
 
+# Settings
 BIAS_SCAN = 10e-3 # 10 mV
 SETPOINT_SCAN = 500e-12 # 500pA
 BIAS_MANIP = 10e-3 # 10 mV
 SETPOINT_MANIP = 80e-9 # 80nA
 SPEED_MANIP = 1e-9 # 1nm/s
 
-WIDTH = 4
-
-def generate_square_blob(image, y_c, x_c, width = WIDTH):
-    ''' Function to generate a "square blob" on an image represented by
-    a boolean 2D numpy array
-
-    Args:
-        image (np.array): image represented as binary 2d array
-        x_c (int): pixel x location of center of blob 
-        y_c (int): pixel y location of center of blob (note: origin is top left of image)
-        width (int): desired width of blob in pixels
-    '''
-
-    new_image = image.copy()
-
-    # Get arrays for the x and y indices to turn on in array
-    pixels_x = np.arange(x_c - int(width/2), x_c + int(width/2), 1)
-    pixels_y = np.arange(y_c - int(width/2), y_c + int(width/2), 1)
-
-    # Turn on pixels
-    for pixel_y in pixels_y:
-        for pixel_x in pixels_x:
-            new_image[pixel_y, pixel_x] = 1
-
-    return new_image
-    
-def annihilate_square_blob(image, y_c, x_c, width = WIDTH):
-    ''' Function for annihilating a square blob from an image given its coordinates
-    '''
-
-    new_image = image.copy()
-
-    # Extra two pixels to make sure to annihilate whole blob -- DEF FIND ANOTHER WAY TO DO THIS
-    width = width + 4
-
-    # Get arrays for the x and y indices to turn on in array
-    pixels_x = np.arange(x_c - int(width/2), x_c + int(width/2), 1)
-    pixels_y = np.arange(y_c - int(width/2), y_c + int(width/2), 1)
-
-    # Turn off pixels
-    for pixel_y in pixels_y:
-        for pixel_x in pixels_x:
-            new_image[pixel_y, pixel_x] = 0
-
-    return new_image
-    
-def generate_example_image(molecule_R, N=256, M=256):
-    ''' Function to generate a toy STM image
-
-        For now, constrained to being a 256x256 image
-
-        Args:
-            molecule_R (Nx2): pixels representing locations of molecules.
-            For a single molecule_r, the first entry (0th index) is y while the
-            second entry (1st index) is x
-    '''
-
-    # Initialize image
-    img = np.zeros((N, M))
-
-    # Generate blobs at desired locations
-    for molecule_r in molecule_R:
-        img = generate_square_blob(img, molecule_r[0], molecule_r[1])
-
-    return img
-
 def follow_path(tcp_client : Nanonis, stm_map : STMMap, path_arr : list, V_arr : list, I_arr : list, 
     z_arr : list, pos_arr : list, t_arr : list, t0: float, sampling = True):
+    ''' Function for handling tcp commands to follow a certain path
+
+    Args:
+        tcp_client (Nanonis): the TCP client connected to the Nanonis SPM Controller software
+        stm_map (STMMap): the image/map the tip is currently working with
+        path_arr (list): nested list where each element is a list of length 2 representing the x, y variable of each node in the path
+        V_arr (list): list of bias V to be measured
+        I_arr (list): list of current I to be measured
+        z_arr (list): list of z position Z to be measured
+        pos_arr (list): list of plane position x, y to be measured
+        t_arr (list): list of recorded time t to be measured
+        t0 (float): reference starting time of whole automation process
+        sampling (bool): 1 = want to add another observation to V_arr, I_arr, etc. 0 = don't add
+    '''
 
     # Convert path arr from pixel --> x,y array
     phys_path_arr = stm_map.pixel2point(path_arr)
@@ -113,6 +63,22 @@ def follow_path(tcp_client : Nanonis, stm_map : STMMap, path_arr : list, V_arr :
 
 def automation_main(molecule_R, final_R, centX, centY, width, height):
     ''' Run the process of automation for given test described in header docstring
+
+    Args:
+        molecule_R (np.ndarray): array of 2D positions of molecules, in pixel coordinates (y, x)
+        final_R (np.ndarray): array of 2D positions of desired final configuration, in pixel coordiantes (y, x)
+        centX (float): x coordinate of center of scan frame (m)
+        centY (float): y coordinate of center of scan frame (m)
+        width (float): width of scan frame (m)
+        height (float): height of scan frame (m)
+
+    Returns:
+        stm_img (STMMap): the STMMap object representing the initial configuration + scan frame configuration
+        V_arr (np.array): array of measured voltage biases vs time (V)
+        I_arr (np.array): array of measured tunneling current vs time (A)
+        z_arr (np.array): array of z position of tip vs time (m)
+        pos_arr (np.array): array of measured x, y tip position vs time (m)
+        t_arr (np.array): array of times associated with measurents (where t[i], for example, is time when z_arr[i] was measured) (s)
     '''
 
     # Generate image
@@ -195,6 +161,7 @@ def automation_main(molecule_R, final_R, centX, centY, width, height):
         stm_img_image = annihilate_square_blob(stm_img_image, pixel_imol_loc[0], pixel_imol_loc[1]) # Take molecule we're working with in map/image for path finding purposes
         
         stm_img_image_map = stm_img_image.copy()
+
         for py in range(stm_img_image.shape[1]):
             for px in range(stm_img_image.shape[0]):
                 if stm_img_image[py, px] == 1:
@@ -242,7 +209,9 @@ def automation_main(molecule_R, final_R, centX, centY, width, height):
         axes.set_title(f'Image after manipulation {i}')
         plt.show()
 
-    return stm_img
+    # Convert observed measurements to numpy arrays
+
+    return stm_img, V_arr, I_arr, z_arr, pos_arr, t_arr
 
 if __name__ == "__main__":
 
@@ -254,4 +223,8 @@ if __name__ == "__main__":
     height = 20e-9
 
     stm_img = automation_main(molecule_R, final_R, centX, centY, width, height)
+
+    # Plot observed data vs time
+
+    # Plot path of tip
     
