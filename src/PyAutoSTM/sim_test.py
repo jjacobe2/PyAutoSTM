@@ -138,10 +138,11 @@ def automation_main(molecule_R, final_R, centX, centY, width, height, obstacles,
     for i in np.arange(stm_img.assigned_init_config.shape[0]):
 
         # Show image before manipulation
-        fig, axes = plt.subplots(1, 1)
-        axes.imshow(stm_img_image, cmap = 'gray_r')
-        axes.set_title(f'Image before manipulation {i}')
-        plt.show()
+        if plot_img:
+            fig, axes = plt.subplots(1, 1)
+            axes.imshow(stm_img_image, cmap = 'gray_r')
+            axes.set_title(f'Image before manipulation {i}')
+            plt.show()
 
         # Find path from current position to molecule to be moved
         curr_pos = stm.folme_xyposget(wait_for_new = 1)
@@ -214,10 +215,11 @@ def automation_main(molecule_R, final_R, centX, centY, width, height, obstacles,
         stm.folme_speedset(10e-9, custom_speed_mod = 0) # Use scanning speed
 
         # Show image after manipulation
-        fig, axes = plt.subplots(1, 1)
-        axes.imshow(stm_img_image, cmap = 'gray_r')
-        axes.set_title(f'Image after manipulation {i}')
-        plt.show()
+        if plot_img:
+            fig, axes = plt.subplots(1, 1)
+            axes.imshow(stm_img_image, cmap = 'gray_r')
+            axes.set_title(f'Image after manipulation {i}')
+            plt.show()
 
     # Convert observed measurements to numpy arrays
     for data_arr in [V_arr, I_arr, z_arr, pos_arr, t_arr]:
@@ -244,7 +246,7 @@ if __name__ == "__main__":
     stm_img, V_arr, I_arr, z_arr, pos_arr, t_arr = automation_main(molecule_R, final_R, centX, centY, width, height, obstacles)
 
     print(type(V_arr))
-    
+
     # Plot observed data vs time
 
     # Plot path of tip
