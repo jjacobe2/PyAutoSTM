@@ -252,5 +252,21 @@ if __name__ == "__main__":
     plt.plot(t_arr, V_arr)
     plt.show()
 
-    # Plot path of tip
-    
+    from matplotlib import animation
+
+    # Animated plot of path of tip vs time
+    fig = plt.figure()
+    ax = plt.axes(xlim=(0-width/2,0+width/2), ylim=(0-height/2, 0+height/2))
+    line, = ax.plot([], [], lw = 1)
+
+    def init():
+        line.set_data([], [])
+        return line,
+
+    def animate(i):
+        line.set_data(pos_arr[0:i, 0], pos_arr[0:i, 1])
+
+    anim = animation.FuncAnimation(fig, animate, init_func = init,
+        frames = 200, interval = 20, blit = True)
+
+    plt.show()
