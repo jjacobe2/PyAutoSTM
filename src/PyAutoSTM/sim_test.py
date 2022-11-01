@@ -255,18 +255,28 @@ if __name__ == "__main__":
     from matplotlib import animation
 
     # Animated plot of path of tip vs time
-    fig = plt.figure()
-    ax = plt.axes(xlim=(0-width/2,0+width/2), ylim=(0-height/2, 0+height/2))
-    line, = ax.plot([], [], lw = 1)
+    fig, axes = plt.subplots(1, 3)
+    axes[0].set_xlim(0 - width/2, 0 + width/2)
+    path, = axes[0].plot([], [], lw = 1)
+    I_line, = axes[1].plot([], [], lw = 1)
+    z_line, = axes[2].plot([], [], lw = 1)
 
     def init():
-        line.set_data([], [])
-        return line,
+        path.set_data([], [])
+        I_line.set_data([], [])
+        z_line.set_data([], [])
+
+        return path, I_line, z_line,
 
     def animate(i):
-        line.set_data(pos_arr[0:i, 0], pos_arr[0:i, 1])
+        path.set_data(pos_arr[0:i, 0], pos_arr[0:i, 1])
+        I_line.set_data(t_arr[0:i], I_arr[0:i])
+        z_line.set_data(t_arr[0:i], z_arr[0:i])
+
+        return path, I_line, z_line
 
     anim = animation.FuncAnimation(fig, animate, init_func = init,
-        frames = 200, interval = 20, blit = True)
+        frames = np.arange(0, t_arr.shape[0], 1), interval = 20, blit = True)
 
+    plt.tight_layout()
     plt.show()
