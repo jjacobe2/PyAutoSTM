@@ -256,26 +256,24 @@ if __name__ == "__main__":
 
     # Animated plot of path of tip vs time
     fig, axes = plt.subplots(1, 3)
-    axes[0].set_xlim(0 - width/2, 0 + width/2)
-    path, = axes[0].plot([], [], lw = 1)
-    I_line, = axes[1].plot([], [], lw = 1)
-    z_line, = axes[2].plot([], [], lw = 1)
-
-    def init():
-        path.set_data([], [])
-        I_line.set_data([], [])
-        z_line.set_data([], [])
-
-        return path, I_line, z_line,
 
     def animate(i):
-        path.set_data(pos_arr[0:i, 0], pos_arr[0:i, 1])
-        I_line.set_data(t_arr[0:i], I_arr[0:i])
-        z_line.set_data(t_arr[0:i], z_arr[0:i])
+        axes[0].clear()
+        axes[1].clear()
+        axes[2].clear()
 
-        return path, I_line, z_line
+        # Set limits
+        axes[0].set_xlim(0 - width/2, 0 + width/2)
+        axes[0].set_ylim(0 - height/2, 0 + height/2)
+        axes[1].set_ylim(-1e-10, 1e-10)
+        axes[2].set_ylim(-1e-8, 1e-8)
 
-    anim = animation.FuncAnimation(fig, animate, init_func = init,
+        # plot
+        axes[0].plot(pos_arr[0:i, 0], pos_arr[0:i, 1])
+        axes[1].plot(t_arr[0:i], I_arr[0:i])
+        axes[2].plot(t_arr[0:i], z_arr[0:i])
+        
+    anim = animation.FuncAnimation(fig, animate,
         frames = np.arange(0, t_arr.shape[0], 1), interval = 20, blit = True)
 
     plt.tight_layout()
