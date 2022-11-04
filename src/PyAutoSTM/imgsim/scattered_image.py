@@ -189,6 +189,9 @@ def kmap(scatter_pos_arr, map_size, bias_V = 0, num_pix = 200, delta = None):
         bias_V (float): bias voltage in V (0 by default)
         num_pix (int): number of pixels of the map (200 by default)
         delta (float/complex): phase change in the scattering
+
+    Return:
+        LDOS (2D np.ndarray): image/map of CO scatterers on Cu
     '''
 
     # Set default values for params
@@ -203,7 +206,6 @@ def kmap(scatter_pos_arr, map_size, bias_V = 0, num_pix = 200, delta = None):
         k = kv2k(bias_V)
 
     x = np.linspace(-map_size/2, map_size/2, num_pix)
-    #X, Y = np.meshgrid(x) # axes for positions
     X = np.array(np.meshgrid(x))
     Y = np.transpose(X)
 
@@ -254,12 +256,18 @@ def kmap(scatter_pos_arr, map_size, bias_V = 0, num_pix = 200, delta = None):
 if __name__ == "__main__":
 
     # Copying from Tony's "Lauras_Stuff.m example"
-    pos_arr = np.array([[0, 0], [-5, 5], [-4, 0], [0, 13], [0, -6], [33, 23]])
-    pos_arr_Cu, t0, rmse = kfit2Cu(pos_arr, disp = True)
+    # Create molecular graphene
+    pos_arr = []
+    for i in np.arange(0, 6, 1):
+        pos_arr = pos_arr + [[11*np.cos(i* 2*np.pi/6), 11*np.sin(i * 2*np.pi/6)]]
+
+    pos_arr = pos_arr + [[0, 0]]
+    pos_arr = np.array(pos_arr)
+    pos_arr_Cu, t0, rmse = kfit2Cu(pos_arr, disp = False)
 
     mapsize = 100
     delta=0.2*(-1+1j) # value set by Tony
-    LDOS = kmap(pos_arr_Cu, mapsize, 2, 1080, delta)
+    LDOS = kmap(pos_arr_Cu, mapsize, 0.5, 1080, delta)
 
     plt.imshow(LDOS, cmap = 'gray', vmin = 0, vmax = 2)
     plt.clim(0.6, 1.6)
