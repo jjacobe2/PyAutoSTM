@@ -272,9 +272,8 @@ if __name__ == "__main__":
         axes[0].plot(pos_arr[0:i, 0], pos_arr[0:i, 1])
         axes[1].plot(t_arr[0:i], I_arr[0:i])
         axes[2].plot(t_arr[0:i], z_arr[0:i])
-        
-    anim = animation.FuncAnimation(fig, animate,
-        frames = np.arange(0, t_arr.shape[0], 1), interval = 20, blit = True)
+
+    anim = animation.FuncAnimation(fig, animate, frames = np.arange(0, t_arr.shape[0], 1))
 
     plt.tight_layout()
     plt.show()
