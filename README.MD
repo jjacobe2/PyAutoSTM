@@ -1,4 +1,6 @@
-Repository for Python software to control the Nanonis SPM controller v5
+PyAutoSTM - Python Automated Scanning Tunneling Microscopy
+
+Python software to control the Nanonis SPM controller v5
 using TCP communication in order to automate the assembly of patterns and structures of CO in LT-STM
 
 Undergraduate research project at the University of Notre Dame, Department of Physics, Condensed Matter
