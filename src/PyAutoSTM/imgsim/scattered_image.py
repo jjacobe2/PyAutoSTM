@@ -253,6 +253,16 @@ def kmap(scatter_pos_arr, map_size, bias_V = 0, num_pix = 200, delta = None):
 
     return LDOS
 
+def create_sim_image(mol_pos_arr, width, bias_V, num_pixels):
+    ''' Abstracted function to create a simulated STM image of CO molecules on Cu(111) using scattering simulation
+    
+    Args:
+        mol_pos_arr (np.ndarray): a N x 2 array of CO molecules coordinates (m)
+        width (float): width/height of the image (m)
+        
+    '''
+
+    
 if __name__ == "__main__":
 
     # Copying from Tony's "Lauras_Stuff.m example"
