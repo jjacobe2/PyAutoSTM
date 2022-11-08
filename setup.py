@@ -1,3 +1,3 @@
 from setuptools import setup
 
-setup(name = 'PyAutoSTM', version = '1.0.0') 
+setup(name = 'PyAutoSTM', version = '0.0.1') 

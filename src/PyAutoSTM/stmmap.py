@@ -6,10 +6,20 @@
     Juwan Jeremy Jacobe
     University of Notre Dame
 
-    Last modified: 24 Oct 2022
+    Last modified: 8 Nov 2022
 '''
 import numpy as np
 from autoutils.assignment import assignment
+
+# Class regarding image + location of CO molecules, possible name: MoleculeMap(?)
+# Essentially a 2D array representing a binarized image and then an N x 2 array containing the pixel locations
+# It should also have ways to generate and annihilating CO molecules from the map
+class MoleculeMap:
+    ''' Class handling data regarding a "molecule" map, a binarized STM image, with the 0 representing empty space
+    and the 1 either representing either part of an obstacle or part of CO molecule.
+
+    Handles as well storing the believed current locations of molecules 
+    '''
 
 # Class handling data regarding an STM scan
 class STMMap:
@@ -37,10 +47,6 @@ class STMMap:
 
         # Save assignment algorithm as object belonging to class
         self.assignment_func = assignment
-
-    # Method for processing image, given a processing function
-    def process_image(self, process_func):
-        self.pro_image = process_func(self.raw_image)
 
     # Method for locating molecules, given a blob detection function
     def locate_molecules(self, blob_detector, image):

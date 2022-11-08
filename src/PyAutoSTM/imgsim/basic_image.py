@@ -58,6 +58,33 @@ def annihilate_square_blob(image, y_c, x_c, width = WIDTH):
 
     return new_image
     
+def annihilate_blob(image, x_c, y_c):
+    new_image = image
+
+    if new_image[y_c, x_c] == 1:
+        new_image[y_c, x_c] = 0
+
+        if x_c - 1 >= 0:
+            annihilate_blob(new_image, y_c, x_c - 1)
+        if y_c - 1 >= 0:
+            annihilate_blob(new_image,  y_c - 1, x_c)
+        if x_c + 1 < new_image.shape[1]:
+            annihilate_blob(new_image, y_c, x_c + 1)
+        if y_c + 1 < new_image.shape[0]:
+            annihilate_blob(new_image, y_c + 1, x_c)
+        if x_c - 1 >= 0 and y_c - 1 >= 0:
+            annihilate_blob(new_image, y_c - 1, x_c - 1)
+        if x_c - 1 >= 0 and y_c + 1 < new_image.shape[0]:
+            annihilate_blob(new_image, y_c + 1, x_c - 1)
+        if x_c + 1 < new_image.shape[1] and y_c - 1 >= 0:
+            annihilate_blob(new_image, y_c - 1, x_c + 1)
+        if x_c + 1 < new_image.shape[1] and y_c + 1 < new_image.shape[0]:
+            annihilate_blob(new_image, y_c + 1, x_c + 1)
+        
+        return new_image
+        
+    return new_image
+
 def generate_example_image(molecule_R, N=256, M=256):
     ''' Function to generate a toy STM image
 
@@ -77,3 +104,16 @@ def generate_example_image(molecule_R, N=256, M=256):
         img = generate_square_blob(img, molecule_r[0], molecule_r[1])
 
     return img
+
+if __name__ == "__main__":
+    locs = np.array([[50, 50], [75, 75], [60, 57], [49, 48]])
+    img = generate_example_image(locs)
+
+    import matplotlib.pyplot as plt
+    plt.imshow(img)
+    plt.show()
+
+    img = annihilate_blob(img, 50, 50)
+
+    plt.imshow(img)
+    plt.show()

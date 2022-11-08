@@ -11,7 +11,7 @@
     Scattering simulation functionalities credited to former graduate students in Dr. Kenjiro Gomes's group as well
     as Anthony Francisco and Nileema Sharma
 
-    Last modified: 28 Oct 2022
+    Last modified: 4 Nov 2022
 '''
 import numpy as np
 import matplotlib.pyplot as plt
@@ -259,26 +259,46 @@ def create_sim_image(mol_pos_arr, width, bias_V, num_pixels):
     Args:
         mol_pos_arr (np.ndarray): a N x 2 array of CO molecules coordinates (m)
         width (float): width/height of the image (m)
-        
+        bias_V (float): desired bias voltage to simulate stm image under (V)
+        num_pixels (int): pixel width and pixel height of image
+
+    Return:
+        img (np.ndarray): a num_pixels x num_pixels array representing the STM image
     '''
 
-    
+    # Convert pos_arr and width from being in units of meters to angstroms
+    mol_pos_arr = mol_pos_arr * 1e10
+    width = width * 1e10
+
+    # Get image
+    img = kmap(mol_pos_arr, width, bias_V, num_pixels)
+
+    return img
+
 if __name__ == "__main__":
 
     # Copying from Tony's "Lauras_Stuff.m example"
     # Create molecular graphene
     pos_arr = []
-    for i in np.arange(0, 6, 1):
-        pos_arr = pos_arr + [[11*np.cos(i* 2*np.pi/6), 11*np.sin(i * 2*np.pi/6)]]
-
+    #for i in np.arange(0, 6, 1):
+    #    pos_arr = pos_arr + [[20*np.cos(i* 2*np.pi/6 - 2*np.pi/6), 20*np.sin(i * 2*np.pi/6 - 2*np.pi/6)]]
+    #for i in np.arange(0, 6, 1):
+    #    pos_arr = pos_arr + [[10*np.cos(i* 2*np.pi/6 - 1*np.pi/6), 10*np.sin(i * 2*np.pi/6 - 1*np.pi/6)]]
     pos_arr = pos_arr + [[0, 0]]
+    pos_arr = pos_arr + [[0, 10]]
     pos_arr = np.array(pos_arr)
     pos_arr_Cu, t0, rmse = kfit2Cu(pos_arr, disp = False)
 
     mapsize = 100
     delta=0.2*(-1+1j) # value set by Tony
-    LDOS = kmap(pos_arr_Cu, mapsize, 0.5, 1080, delta)
+    LDOS = kmap(pos_arr, mapsize, 0.5, 256, delta) ** 2
 
     plt.imshow(LDOS, cmap = 'gray', vmin = 0, vmax = 2)
     plt.clim(0.6, 1.6)
+    plt.show()
+
+    from skimage.filters import threshold_minimum
+
+    # bin_LDOS = LDOS > threshold_minimum(LDOS)
+    # plt.imshow(filt_LDOS, cmap = 'gray')
     plt.show()

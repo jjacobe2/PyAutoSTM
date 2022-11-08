@@ -8,7 +8,7 @@
     Juwan Jeremy Jacobe
     University of Notre Dame
 
-    Last modified: 24 Oct 2022
+    Last modified: 8 Nov 2022
 '''
 
 import numpy as np
