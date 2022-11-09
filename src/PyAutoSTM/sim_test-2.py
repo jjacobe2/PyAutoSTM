@@ -61,6 +61,27 @@ def follow_path(tcp_client : Nanonis, stm_map : STMMap, path_arr : list, V_arr :
 
     return V_arr, I_arr, z_arr, pos_arr, t_arr
 
+# Function main 
+def automation_main():
+    '''
+    '''
+
+    # Create STMMap object
+
+    # Blob detection
+
+    # Assignment
+
+    # Primary loop
+    # Scanning mode
+    # Move tip
+    # Manipulation mode
+    # Slow
+    # Slowly move tip to final
+    # Scanning mode
+    # Scan/i.e. regenerate new image
+    # Do image processing to see if moved successfully
+    
 if __name__ == "__main__":
     img_width = 20e-9
     bias_V = 0.5

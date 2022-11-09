@@ -13,46 +13,47 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import ndimage
-import skimage
+from skimage.filters import threshold_otsu
+
+CO_EFFECTIVE_SIZE = 1.5e-9
 
 # Process image to do some denoising/contrasting
 def normalize_img(img):
     ''' Normalize image for values to be between 0 and 1
     '''
 
+    # Invert img so where there are scatterers have higher value than "empty space"
     img = 1/img
     normalize_img = img.copy()
-
-    img_max = np.amax(img)
-    img_min = np.amin(img)
-
-    normalize_img = normalize_img - (img_min) / (img_max - img_min)
-
+    normalize_img = normalize_img / np.linalg.norm(normalize_img)
+    
     return normalize_img
 
 # Define function what  
-def contrast_img(img):
+def threshold_img(img, width):
     '''
     '''
-    
-    #for now just use a Gaussian filter
-    #img = ndimage.gaussian_filter(img, 3)
-    from skimage.filters import threshold_otsu
-    from scipy import fftpack
+
+    kernel_size = int( CO_EFFECTIVE_SIZE/width * 256 )
+
+    sigma = int((kernel_size-1)/6)
+    print(sigma)
+
+    # For now to process image, just f
+    img = ndimage.gaussian_filter(img, sigma)
 
     local_thresh = threshold_otsu(img)
     img = img > local_thresh
 
-    print(img)
     return img
 
 # Function doing both normalizing and contrasting?
-def process_img(img, disp = True):
+def process_img(img, width, disp = True):
     '''
     '''
 
     normalized_img = normalize_img(img)
-    processed_img = contrast_img(normalized_img)
+    processed_img = threshold_img(normalized_img, width)
 
     if disp:
         fig, axes = plt.subplots(1, 3, figsize = (10, 5))
@@ -63,15 +64,6 @@ def process_img(img, disp = True):
         plt.show()
 
     return processed_img
-
-# Threshold function
-def threshold_img(img):
-    '''
-    '''
-
-    #
-
-    return img
 
 # Blob detection, give pixel coordinates
 def blob_detection(img):
@@ -84,4 +76,4 @@ def blob_detection(img):
     return blobs
 
 if __name__ == "__main__":
-    pass
+    threshold_img(10)

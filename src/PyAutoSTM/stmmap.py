@@ -41,8 +41,8 @@ class STMMap:
         self.img_processor = process_img
 
     # Method for processing/thresholding image
-    def process_img(self, image):
-        self.processed_image = self.img_processor(image)
+    def process_img(self, image, width):
+        self.processed_image = self.img_processor(image, width)
 
     # Method for locating molecules, given a blob detection function
     def locate_molecules(self, blob_detector, image):
@@ -124,4 +124,4 @@ if __name__ == "__main__":
     image = sc_sim.create_sim_image(pos_arr, width, bias_V, num_pixels)
 
     map = STMMap(image, 0, 0, width, width, 0)
-    map.process_img(image) 
+    map.process_img(image, width) 
