@@ -58,6 +58,7 @@ def assignment(init_R, final_R):
         Returns:
             assigned_init_R (np.array): entries of init_R that are assigned, ordered in such a way that it corresponds to assigned_final_R row by row
             assigned_final_R (np.array): entries of final_R that are assigned, ordered in such a way that it corresponds to assigned_init_R row by row
+            row_ind (np.array): indices of entries of assigned_init_R from the whole initial configuration, i.e. row_ind[i] gives you the index of assigned_init_R[i] to find it it init_R
     '''
 
     # Create cost matrix
@@ -71,7 +72,7 @@ def assignment(init_R, final_R):
     assigned_init_R = cost_matrix.init_R[row_ind]
     assigned_final_R = cost_matrix.final_R[col_ind]
 
-    return assigned_init_R, assigned_final_R
+    return assigned_init_R, assigned_final_R, row_ind
 
 if __name__ == "__main__":
     N = 20

@@ -270,6 +270,8 @@ def create_sim_image(mol_pos_arr, width, bias_V, num_pixels):
     mol_pos_arr = mol_pos_arr * 1e10
     width = width * 1e10
 
+    print(mol_pos_arr)
+    print(width)
     # Get image
     img = kmap(mol_pos_arr, width, bias_V, num_pixels)
 

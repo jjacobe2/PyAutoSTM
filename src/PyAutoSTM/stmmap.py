@@ -10,16 +10,7 @@
 '''
 import numpy as np
 from autoutils.assignment import assignment
-
-# Class regarding image + location of CO molecules, possible name: MoleculeMap(?)
-# Essentially a 2D array representing a binarized image and then an N x 2 array containing the pixel locations
-# It should also have ways to generate and annihilating CO molecules from the map
-class MoleculeMap:
-    ''' Class handling data regarding a "molecule" map, a binarized STM image, with the 0 representing empty space
-    and the 1 either representing either part of an obstacle or part of CO molecule.
-
-    Handles as well storing the believed current locations of molecules 
-    '''
+from autoutils.stmimaging import process_img
 
 # Class handling data regarding an STM scan
 class STMMap:
@@ -47,6 +38,11 @@ class STMMap:
 
         # Save assignment algorithm as object belonging to class
         self.assignment_func = assignment
+        self.img_processor = process_img
+
+    # Method for processing/thresholding image
+    def process_img(self, image):
+        self.processed_image = self.img_processor(image)
 
     # Method for locating molecules, given a blob detection function
     def locate_molecules(self, blob_detector, image):
@@ -58,7 +54,17 @@ class STMMap:
 
     # Method for assigning molecules to the desired final configuration, given an assignment function
     def assign_molecules(self):
-        self.assigned_init_config, self.assigned_final_config = self.assignment_func(self.all_molecules, self.final_config)
+        self.assigned_init_config, self.assigned_final_config, self.assigned_indices = self.assignment_func(self.all_molecules, self.final_config)
+        self.unmoved_all_molecules = self.all_molecules
+        self.unmoved_init_molecules = self.assigned_init_config
+        self.unfilled_final_molecules = self.assigned_final_config
+
+    # Method for confirming a move and removing a molecule from variable for storing specifically the assigned molecules that haven't been moved
+    # and for also storing final molecule positions that haven't been "filled" yet
+    def confirm_successful_move(self, index):
+        self.unmoved_all_molecules = np.delete(self.unmoved_all_molecules, self.assigned_indices[index], axis = 0)
+        self.unmoved_init_molecules = np.delete(self.unmoved_init_molecules, index, axis = 0)
+        self.unfilled_final_molecules = np.delete(self.unfilled_final_molecules, index, axis = 0)
 
     # insert function here doing pixel --> physical transformation & vice versa
     def pixel2point(self, pixel_arr):
@@ -108,4 +114,14 @@ class STMMap:
         return pixel_arr
 
 if __name__ == "__main__":
-    pass
+    import imgsim.scattered_image as sc_sim
+    #pos_arr = np.array([[0, 0], [0.5, 0.5], [-0.25, 0.75], [-0.05, 0.1],]) * 10e-9
+    pos_arr = np.random.uniform(low = -1, high = 1, size =(20, 2))* 10e-9
+    width = 20e-9
+    bias_V = 0.1
+    num_pixels = 256
+
+    image = sc_sim.create_sim_image(pos_arr, width, bias_V, num_pixels)
+
+    map = STMMap(image, 0, 0, width, width, 0)
+    map.process_img(image) 
