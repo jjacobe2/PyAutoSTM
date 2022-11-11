@@ -254,7 +254,8 @@ def kmap(scatter_pos_arr, map_size, bias_V = 0, num_pix = 200, delta = None):
     return LDOS
 
 def create_sim_image(mol_pos_arr, width, bias_V, num_pixels):
-    ''' Abstracted function to create a simulated STM image of CO molecules on Cu(111) using scattering simulation
+    ''' Abstracted function to create a simulated STM image of CO molecules on Cu(111) using scattering simulation.
+    "Image" in actuality is dI/dV over the points of the image
     
     Args:
         mol_pos_arr (np.ndarray): a N x 2 array of CO molecules coordinates (m)
@@ -263,44 +264,72 @@ def create_sim_image(mol_pos_arr, width, bias_V, num_pixels):
         num_pixels (int): pixel width and pixel height of image
 
     Return:
-        img (np.ndarray): a num_pixels x num_pixels array representing the STM image
+        img (np.ndarray): a num_pixels x num_pixels array representing the STM image, with dI/dV as the intensity
     '''
 
     # Convert pos_arr and width from being in units of meters to angstroms
     mol_pos_arr = mol_pos_arr * 1e10
     width = width * 1e10
 
-    print(mol_pos_arr)
-    print(width)
+    delta = 0.2*(-1+1j)
+
     # Get image
-    img = kmap(mol_pos_arr, width, bias_V, num_pixels)
+    img = kmap(mol_pos_arr, width, bias_V, num_pixels, delta)
 
     return img
 
+def create_sim_topo_image(mol_pos_arr, width, bias_V, num_pixels, n):
+    ''' Function to create a rough "topographic" image by integrating dI/dV over V using a 
+    Riemann sum with n terms
+    '''
+
+    # Create array of V to be integration points 
+    V_arr = np.linspace(0, bias_V, n)
+
+    # Get dV from array of V
+    delta_V = V_arr[1] - V_arr[0]
+
+    # Initialize empty list of images
+    img_list = []
+
+    # Generate image for each bias voltage in V_arr and add to list
+    for bias_V in V_arr:
+        img_list = img_list + [create_sim_image(mol_pos_arr, width, bias_V, num_pixels)]
+
+    # Initialize image with same shape as one of the dI/dV shape (all same shape anyway so it dont matter fo sho)
+    topo_img = np.zeros(img_list[0].shape)
+
+    # Sum up Riemann terms
+    for i in np.arange(1, len(img_list), 1):
+        topo_img = topo_img + (img_list[i] + img_list[i-1]) / 2 * delta_V
+
+    # Return log as Z ~ ln(I) I think, need to confirm with Xiaolong/another source besides me making it the fuck up
+    return np.log(topo_img)
+    
 if __name__ == "__main__":
 
-    # Copying from Tony's "Lauras_Stuff.m example"
-    # Create molecular graphene
-    pos_arr = []
-    #for i in np.arange(0, 6, 1):
-    #    pos_arr = pos_arr + [[20*np.cos(i* 2*np.pi/6 - 2*np.pi/6), 20*np.sin(i * 2*np.pi/6 - 2*np.pi/6)]]
-    #for i in np.arange(0, 6, 1):
-    #    pos_arr = pos_arr + [[10*np.cos(i* 2*np.pi/6 - 1*np.pi/6), 10*np.sin(i * 2*np.pi/6 - 1*np.pi/6)]]
-    pos_arr = pos_arr + [[0, 0]]
-    pos_arr = pos_arr + [[0, 10]]
-    pos_arr = np.array(pos_arr)
-    pos_arr_Cu, t0, rmse = kfit2Cu(pos_arr, disp = False)
+    '''
+    # Copying from Tony's "Lauras_Stuff.m example
+    #pos_arr = pos_arr + [[0, 0]]
+    #pos_arr = pos_arr + [[0, 10]]
+    #pos_arr = np.array(pos_arr)
+    #pos_arr_Cu, t0, rmse = kfit2Cu(pos_arr, disp = False)
 
+    
     mapsize = 100
     delta=0.2*(-1+1j) # value set by Tony
     LDOS = kmap(pos_arr, mapsize, 0.5, 256, delta) ** 2
+    '''
+    
+    pos_arr = np.array([[0, 1], [8, 9]]) * 1e-9
+    width = 20e-9
 
-    plt.imshow(LDOS, cmap = 'gray', vmin = 0, vmax = 2)
-    plt.clim(0.6, 1.6)
+    # Create dI/dV
+    img = create_sim_image(pos_arr, width, 0.5, 256)
+    plt.imshow(img, cmap = 'gray', vmin = 0, vmax = 2)
     plt.show()
 
-    from skimage.filters import threshold_minimum
-
-    # bin_LDOS = LDOS > threshold_minimum(LDOS)
-    # plt.imshow(filt_LDOS, cmap = 'gray')
+    # Create topo image
+    topo_img = create_sim_topo_image(pos_arr, width, 0.5, 256, 100)
+    plt.imshow(topo_img, cmap = 'gray')
     plt.show()

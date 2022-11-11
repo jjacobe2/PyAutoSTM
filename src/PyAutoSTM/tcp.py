@@ -738,12 +738,17 @@ class Nanonis(Commands):
         self.sock.close()
 
 if __name__ == "__main__":
+
+    # Create instance of TCP client
     stm = Nanonis()
-    stm.connect()
+    stm.connect() # connect
     
     # Test TCP commands Scan.BufferGet and Scan.FrameDataGrab
+    # Get parameters of the scan
     num_channels, pixels, lines = stm.scan_bufferget()
     chan = 0
+
+    # Get scan data from channel 0 using specificied scan parameters
     data = stm.scan_framedatagrab(chan, 1, lines, pixels)
     plt.imshow(data, cmap = 'hot')
     plt.show()

@@ -121,7 +121,7 @@ if __name__ == "__main__":
     bias_V = 0.1
     num_pixels = 256
 
-    image = sc_sim.create_sim_image(pos_arr, width, bias_V, num_pixels)
+    image = sc_sim.create_sim_topo_image(pos_arr, width, bias_V, num_pixels, 50)
 
     map = STMMap(image, 0, 0, width, width, 0)
     map.process_img(image, width) 

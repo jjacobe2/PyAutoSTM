@@ -39,9 +39,11 @@ def threshold_img(img, width):
     sigma = int((kernel_size-1)/6)
     print(sigma)
 
-    # For now to process image, just f
-    img = ndimage.gaussian_filter(img, sigma)
+    # For now to process image, just f. Exponentiate to the 5th power just for the kicks, y'know?
+    img = ndimage.gaussian_filter(img, sigma) ** 5
 
+    plt.imshow(img)
+    plt.show()
     local_thresh = threshold_otsu(img)
     img = img > local_thresh
 
@@ -76,4 +78,4 @@ def blob_detection(img):
     return blobs
 
 if __name__ == "__main__":
-    threshold_img(10)
+    pass
