@@ -17,14 +17,18 @@ from skimage.filters import threshold_otsu
 
 CO_EFFECTIVE_SIZE = 1.5e-9
 
+def invert_img(img):
+    ''' Invert image so relative large values --> relative small values and vice versa. Do via simple inverse of data
+    '''
+
+    return 1/img
 # Process image to do some denoising/contrasting
 def normalize_img(img):
-    ''' Normalize image for values to be between 0 and 1
+    ''' Normalize image for values to be between 0 and 1 as well as also invert it
     '''
 
     # Invert img so where there are scatterers have higher value than "empty space"
-    img = 1/img
-    normalize_img = img.copy()
+    normalize_img = invert_img(img)
     normalize_img = normalize_img / np.linalg.norm(normalize_img)
     
     return normalize_img
@@ -40,7 +44,7 @@ def threshold_img(img, width):
     print(sigma)
 
     # For now to process image, just f. Exponentiate to the 5th power just for the kicks, y'know?
-    img = ndimage.gaussian_filter(img, sigma) ** 5
+    img = ndimage.gaussian_filter(img, sigma) ** 5 
 
     plt.imshow(img)
     plt.show()
@@ -72,7 +76,6 @@ def blob_detection(img):
     '''
     '''
 
-    # 
     blobs = None
 
     return blobs

@@ -115,13 +115,20 @@ class STMMap:
 
 if __name__ == "__main__":
     import imgsim.scattered_image as sc_sim
-    #pos_arr = np.array([[0, 0], [0.5, 0.5], [-0.25, 0.75], [-0.05, 0.1],]) * 10e-9
-    pos_arr = np.random.uniform(low = -1, high = 1, size =(20, 2))* 10e-9
+    # pos_arr = np.random.uniform(low = -1, high = 1, size =(20, 2))* 10e-9
+    pos_arr = np.array([[0, 0], [0.5, 0.5], [-0.1, 0.1]]) * 10e-9
     width = 20e-9
-    bias_V = 0.1
+    bias_V = 0.2
     num_pixels = 256
 
-    image = sc_sim.create_sim_topo_image(pos_arr, width, bias_V, num_pixels, 50)
+    image = sc_sim.create_sim_topo_image(pos_arr, width, bias_V, num_pixels, 200)
 
     map = STMMap(image, 0, 0, width, width, 0)
     map.process_img(image, width) 
+
+    from imgsim.basic_image import annihilate_blob
+    new_img = annihilate_blob(map.processed_image, int(256/2), int(256/2))
+
+    import matplotlib.pyplot as plt
+    plt.imshow(new_img, cmap = 'gray')
+    plt.show()
