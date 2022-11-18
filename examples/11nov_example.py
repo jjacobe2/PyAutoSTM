@@ -12,7 +12,7 @@ def do_greeting(student):
     major = student.major
 
     print('Hi ' + name + ' , I am also a ' + major + ' major!')
-
+    
 student1 = Student('John', 'Physics')
 print(student1.name)
 

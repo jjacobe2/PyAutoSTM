@@ -17,14 +17,25 @@ from skimage.filters import threshold_otsu
 
 CO_EFFECTIVE_SIZE = 1.5e-9
 
-def invert_img(img):
-    ''' Invert image so relative large values --> relative small values and vice versa. Do via simple inverse of data
+def invert_img(img: np.ndarray):
+    ''' Invert image so relative large values --> relative small values and vice versa. Do via simple inverse of data, i.e. do elementwise
+    inverse of array elements
+
+    Args:
+        img (np.ndarray): image array
     '''
 
     return 1/img
-# Process image to do some denoising/contrasting
-def normalize_img(img):
-    ''' Normalize image for values to be between 0 and 1 as well as also invert it
+
+# Pre process image to do some denoising/contrasting
+def normalize_img(img: np.ndarray):
+    ''' Normalize image for values to be between 0 and 1 (and also invert it) to prepare image for blob detection
+
+    Args:
+        img (np.ndarray): image array
+
+    Return
+        normalize_img (np.ndarray): image after inversion and normalization of data
     '''
 
     # Invert img so where there are scatterers have higher value than "empty space"
@@ -33,43 +44,74 @@ def normalize_img(img):
     
     return normalize_img
 
-# Define function what  
-def threshold_img(img, width):
-    '''
-    '''
+def denoise_image(img: np.ndarray, width: float, method: str = 'gaussian filter'):
+    ''' Function to denoise image via certain methods. Default method (and only method currently implemented) is
+    using scipy.ndimage.gaussian_filter function
 
-    kernel_size = int( CO_EFFECTIVE_SIZE/width * 256 )
+    Args:
+        img (np.ndarray): image array
+        width (float): width of scan image in meters
+        method (str): method to use. Default: gaussian filter
 
-    sigma = int((kernel_size-1)/6)
-    print(sigma)
-
-    # For now to process image, just f. Exponentiate to the 5th power just for the kicks, y'know?
-    img = ndimage.gaussian_filter(img, sigma) ** 5 
-
-    plt.imshow(img)
-    plt.show()
-    local_thresh = threshold_otsu(img)
-    img = img > local_thresh
-
-    return img
-
-# Function doing both normalizing and contrasting?
-def process_img(img, width, disp = True):
-    '''
+    Retrun
+        denoised_img (np.ndarray): image array after denoising method
     '''
 
-    normalized_img = normalize_img(img)
-    processed_img = threshold_img(normalized_img, width)
+    if method == 'gaussian filter':
+        
+        # Figure out kernel size by using CO width in pixels as effective kernel size
+        kernel_size = int(CO_EFFECTIVE_SIZE/width * 256 )
+        sigma = int((kernel_size-1)/6) # apparently from this one dude on Stack Overflow, sigma should be this given kernel size.
+
+        # Apply gaussian filter. Exponentiate to the 5th power just for the kicks, y'know? (Stop if it becomes a problem which is probs soon)
+        denoised_img = ndimage.gaussian_filter(img, sigma) ** 5 
+
+        return denoised_img
+
+    else:
+        raise ValueError('ERROR: Method chosen is invalid')
+
+# Function to threshold/binarize image
+def threshold_img(img: np.ndarray, method: str = 'otsu'):
+    ''' Function to binarize image via thresholding methods in order to process image for blob detection
+
+    Args:
+        img (np.ndarray): image array
+        method (str): method to use for thresholding: Default: otsu's threshold
+    '''
+
+    if method == 'otsu':
+        local_thresh = threshold_otsu(img) # Find threshold using otsu's method
+        bin_img = img > local_thresh # Thresholding
+
+    else:
+        raise ValueError('ERROR: Method chosen in invalid')
+    
+    return bin_img
+
+# Function to do everything above in one pretty little packaged function :)
+def process_img(img: np.ndarray, width: float, denoising_method: str = 'gaussian filter', thresholding_method: str = 'otsu', disp: bool = False):
+    ''' Generalized function for preprocessing image for blob detection by (1) inverting, (2) normalizing, (3) denosing, and then (4) thresholding
+    the image
+    '''
+
+    inverted_img = invert_img(img) # Invert
+    normalized_img = normalize_img(inverted_img) # Normalize
+    denoised_img = denoise_image(img, width, denoising_method) # Denoise
+    bin_img = threshold_img(denoised_img, thresholding_method) # Binarized
 
     if disp:
-        fig, axes = plt.subplots(1, 3, figsize = (10, 5))
+        fig, axes = plt.subplots(1, 5, figsize = (15, 5))
         axes[0].imshow(img, cmap='gray')
-        axes[1].imshow(normalized_img, cmap = 'gray')
-        axes[2].imshow(processed_img, cmap = 'gray')
+        axes[1].imshow(inverted_img, cmap = 'gray')
+        axes[2].imshow(normalized_img, cmap = 'gray')
+        axes[3].imshow(denoised_img, cmap = 'gray')
+        axes[4].imshow(bin_img, cmap = 'gray')
+
         plt.tight_layout()
         plt.show()
 
-    return processed_img
+    return bin_img
 
 # Blob detection, give pixel coordinates
 def blob_detection(img):
