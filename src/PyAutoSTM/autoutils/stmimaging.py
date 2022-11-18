@@ -7,16 +7,20 @@
     Juwan Jeremy Jacobe
     University of Notre Dame
 
-    Last modified: 7 Nov 2022
+    Last modified: 18 Nov 2022
 '''
 
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import ndimage
 from skimage.filters import threshold_otsu
+from skimage.feature import blob_log # Import blob detection via laplacian of gaussian method
 
-CO_EFFECTIVE_SIZE = 1.5e-9
+CO_EFFECTIVE_SIZE = 1.5e-9 # FOR GAUSSIAN FILTERING
+CO_MIN_SIZE = 0.5e-9 # FOR BLOB DETECTION
+CO_MAX_SIZE = 2e-9 # FOR BLOB DETECTION
 
+# Invert image so dark --> light and vice versa (Want blobs to be "on pixels" and empty space to be "off pixels")
 def invert_img(img: np.ndarray):
     ''' Invert image so relative large values --> relative small values and vice versa. Do via simple inverse of data, i.e. do elementwise
     inverse of array elements
@@ -27,7 +31,7 @@ def invert_img(img: np.ndarray):
 
     return 1/img
 
-# Pre process image to do some denoising/contrasting
+# Normalize so all values between 0 and 1 yea?
 def normalize_img(img: np.ndarray):
     ''' Normalize image for values to be between 0 and 1 (and also invert it) to prepare image for blob detection
 
@@ -123,13 +127,38 @@ def process_img(img: np.ndarray, width: float, disp: bool = False, denoising_met
     return bin_img
 
 # Blob detection, give pixel coordinates
-def blob_detection(img):
+def blob_detection(img: np.ndarray, width: float, method: str = 'log', disp: bool = 'True'):
     '''
     '''
 
-    blobs = None
+    # Get number of pixels along width by looking at shape of array
+    pixel_width = int(img.shape[0])
 
-    return blobs
+    # Calculate min_sigma and max_sigma based on image sizes
+    CO_pixel_width_min = int(CO_MIN_SIZE/width * pixel_width)
+    CO_pixel_width_max = int(CO_MAX_SIZE/width * pixel_width)
+    min_sigma = CO_pixel_width_min/(2*np.sqrt(2))
+    max_sigma = CO_pixel_width_max/(2*np.sqrt(2))
+
+    # Blob detection babyyyy
+    if method == 'log':
+        blobs = blob_log(img, min_sigma = min_sigma, max_sigma = max_sigma, overlap = 0.1)
+
+    # If doing so, show off blob detection
+    if disp:
+        fig, ax = plt.subplots(1, 1, figsize = (5, 5))
+        ax.set_title('Blob Detection', fontsize = 12)
+
+        for blob in blobs:
+            y, x, area = blob
+            ax.imshow(img, cmap = 'gray')
+            ax.add_patch(plt.Circle((x, y), area*np.sqrt(2), color = 'r', fill = False))
+
+        plt.tight_layout()
+        plt.show()
+    
+    # Return only first two columns which contain the y, x coordinates
+    return blobs[:, :2]
 
 # Function to recursively annihilate a "blob", i.e. a group of on pixels that are neighbours. To be used for pathfinding purposes
 def annihilate_blob(image, x_c, y_c):
@@ -140,6 +169,9 @@ def annihilate_blob(image, x_c, y_c):
         image (np.ndarray): image array
         x_c (int): pixel x coordinate/column index
         y_c (int): pixel y coordinate/row index
+
+    Returns:
+        new_image (np.ndarray): image without specificied blob
     '''
 
     # Create new image

@@ -6,11 +6,12 @@
     Juwan Jeremy Jacobe
     University of Notre Dame
 
-    Last modified: 8 Nov 2022
+    Last modified: 18 Nov 2022
 '''
 import numpy as np
 from autoutils.assignment import assignment
 from autoutils.stmimaging import process_img
+from autoutils.stmimaging import blob_detection
 
 # Class handling data regarding an STM scan
 class STMMap:
@@ -39,14 +40,15 @@ class STMMap:
         # Save assignment algorithm as object belonging to class
         self.assignment_func = assignment
         self.img_processor = process_img
+        self.blob_detector = blob_detection
 
     # Method for processing/thresholding image
-    def process_img(self, image, width, disp = 'False'):
+    def process_img(self, image, width, disp = False):
         self.processed_image = self.img_processor(image, width, disp)
 
     # Method for locating molecules, given a blob detection function
-    def locate_molecules(self, blob_detector, image):
-        self.all_molecules = blob_detector(image)
+    def locate_molecules(self, image, width, disp = False):
+        self.all_molecules_pixels = self.blob_detector(image, width, disp = disp)
 
     # Method for defining a desired final configuration
     def define_final_configuration(self, pattern):
@@ -121,15 +123,20 @@ if __name__ == "__main__":
     bias_V = 0.2
     num_pixels = 256
 
-    image = sc_sim.create_sim_topo_image(pos_arr, width, bias_V, num_pixels, 500)
+    image = sc_sim.create_sim_topo_image(pos_arr, width, bias_V, num_pixels, 300)
 
     map = STMMap(image, 0, 0, width, width, 0)
     map.process_img(image, width, True) 
 
     from autoutils.stmimaging import annihilate_blob
-    
-    new_img = annihilate_blob(map.processed_image, int(256/2), int(256/2))
+
+    new_img = annihilate_blob(map.processed_image.copy(), int(256/2), int(256/2))
 
     import matplotlib.pyplot as plt
-    plt.imshow(new_img, cmap = 'gray')
-    plt.show()
+    #plt.imshow(new_img, cmap = 'gray')
+    #plt.show()
+
+    # Test out blob detection
+    map.locate_molecules(map.processed_image, width, disp = True)
+    print(map.all_molecules_pixels)
+    print(map.pixel2point(map.all_molecules_pixels.astype(int)))
