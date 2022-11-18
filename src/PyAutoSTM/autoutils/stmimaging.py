@@ -127,8 +127,18 @@ def process_img(img: np.ndarray, width: float, disp: bool = False, denoising_met
     return bin_img
 
 # Blob detection, give pixel coordinates
-def blob_detection(img: np.ndarray, width: float, method: str = 'log', disp: bool = 'True'):
-    '''
+def blob_detection(img: np.ndarray, width: float, method: str = 'log', disp: bool = False):
+    ''' Function to perform blob detection on a binarized image (intent is for image to be binarized but can theoretically be
+    used without binarizing? Can be a grayscale image?)
+
+    Args:
+        img (np.ndarray): image array
+        width (float): width of scan image in meters
+        method (str): Method of doing blob detection. Default: Laplacian of Gaussian
+        disp (bool): Display blob detection with plot. Default: False
+
+    Returns:
+        blob_coordinates (np.ndarray): array of [y, x] pixel coordinates
     '''
 
     # Get number of pixels along width by looking at shape of array
@@ -158,7 +168,9 @@ def blob_detection(img: np.ndarray, width: float, method: str = 'log', disp: boo
         plt.show()
     
     # Return only first two columns which contain the y, x coordinates
-    return blobs[:, :2]
+    blob_coordinates = blobs[:, :2]
+
+    return blob_coordinates
 
 # Function to recursively annihilate a "blob", i.e. a group of on pixels that are neighbours. To be used for pathfinding purposes
 def annihilate_blob(image, x_c, y_c):
@@ -205,6 +217,11 @@ def annihilate_blob(image, x_c, y_c):
         
     # Base case? I.e. if not 1, just return
     return new_image
+
+# Function to delete a spherical/square blob of a certain pixel radius or whateves
+
+# Function to enlarge blobs -- for pathfinding
+
 
 if __name__ == "__main__":
     pass
