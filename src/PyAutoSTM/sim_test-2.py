@@ -9,7 +9,7 @@
     Juwan Jeremy Jacobe
     University of Notre Dame
 
-    Last modified: 8 Nov 2022
+    Last modified: 18 Nov 2022
 '''
 
 import numpy as np
@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import time
 
 import autoutils.astar as astar
-from imgsim.scattered_image import create_sim_image
+from imgsim.scattered_image import create_sim_topo_image
 from stmmap import STMMap
 from tcp import Nanonis
 
@@ -29,7 +29,7 @@ SETPOINT_MANIP = 80e-9 # 80nA
 SPEED_MANIP = 1e-9 # 1nm/s
 
 def follow_path(tcp_client : Nanonis, stm_map : STMMap, path_arr : list, V_arr : list, I_arr : list, 
-    z_arr : list, pos_arr : list, t_arr : list, t0: float, sampling = True):
+    z_arr : list, pos_arr : list, t_arr : list, t0: float, sampling: bool = True):
     ''' Function for handling tcp commands to follow a certain path
 
     Args:

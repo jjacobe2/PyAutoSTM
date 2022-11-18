@@ -221,7 +221,26 @@ def annihilate_blob(image, x_c, y_c):
 # Function to delete a spherical/square blob of a certain pixel radius or whateves
 
 # Function to enlarge blobs -- for pathfinding
+def enlarge_obstacles(img: np.ndarray, pixel_size: int = 2):
+    ''' Function to enlarge "obstacles", i.e. groups of on pixels, by a radius of pixel_size around all directions
 
+    Args:
+        img (np.ndarray): (binarized) image array
+        pixel_size (int): radius of enlargement (that's what she said ~.o)
 
+    Return:
+        mod_img (np.ndarray): image array with obstacles enlarged
+    '''
+    
+    mod_img = img.copy()
+    height = img.shape[0]
+    width = img.shape[1]
+
+    for i in np.arange(0, height, 1):
+        for j in np.arange(0, width, 1):
+            if img[i, j] == 1:
+                for k in np.arange(1, pixel_size + 1, 1):
+                    pass
+                
 if __name__ == "__main__":
     pass

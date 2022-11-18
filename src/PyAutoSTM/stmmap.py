@@ -9,21 +9,30 @@
     Last modified: 18 Nov 2022
 '''
 import numpy as np
+import matplotlib.pyplot as plt
 from autoutils.assignment import assignment
-from autoutils.stmimaging import process_img
-from autoutils.stmimaging import blob_detection
+from autoutils.stmimaging import process_img, blob_detection, annihilate_blob
 
 # Class handling data regarding an STM scan
 class STMMap:
-    ''' Class handling data regarding the primary STM scan and locations of molecules on the STM scan
+    ''' Class handling data regarding the primary STM scan and locations of molecules on the STM scan. 
+    Important scan image paramaters:
+        centX: physical x coordinate of center of scan frame
+        centY: physical y coordinate of center of scan frame
+        width: physical width of image in meters
+        height: physical height of image in meters (typically: height = width, i.e. square image)
+        angle: angle at which image is scanned at with respect to some x, y axes (kinda typically: angle = 0)
     '''
+
     def __init__(self, image_data, centX, centY, width, height, angle):
+
+        # Store image and scan paramaters
         self.raw_image = image_data
-        self.centX = centX
-        self.centY = centY
-        self.width = width
-        self.height = height
-        self.angle = angle
+        self.centX = centX # m
+        self.centY = centY # m
+        self.width = width # m
+        self.height = height # m 
+        self.angle = angle # degrees
 
         # Calculate width and height of images in pixels by looking at dimensions of image array
         self.pixel_height, self.pixel_width = self.raw_image.shape
@@ -48,7 +57,10 @@ class STMMap:
 
     # Method for locating molecules, given a blob detection function
     def locate_molecules(self, image, width, disp = False):
-        self.all_molecules_pixels = self.blob_detector(image, width, disp = disp)
+        self.all_molecules_pixel = self.blob_detector(image, width, disp = disp)
+
+        # Convert pixel coordinates to physical and store
+        self.all_molecules = self.pixel2point(self.all_molecules_pixel.astype(int))
 
     # Method for defining a desired final configuration
     def define_final_configuration(self, pattern):
@@ -117,26 +129,22 @@ class STMMap:
 
 if __name__ == "__main__":
     import imgsim.scattered_image as sc_sim
-    # pos_arr = np.random.uniform(low = -1, high = 1, size =(20, 2))* 10e-9
+
+    # Image params
     pos_arr = np.array([[0, 0], [0.5, 0.5], [-0.1, 0.1]]) * 10e-9
     width = 20e-9
-    bias_V = 0.2
+    bias_V = 0.01
     num_pixels = 256
 
+    # Create image
     image = sc_sim.create_sim_topo_image(pos_arr, width, bias_V, num_pixels, 300)
 
     map = STMMap(image, 0, 0, width, width, 0)
     map.process_img(image, width, True) 
 
-    from autoutils.stmimaging import annihilate_blob
-
     new_img = annihilate_blob(map.processed_image.copy(), int(256/2), int(256/2))
-
-    import matplotlib.pyplot as plt
-    #plt.imshow(new_img, cmap = 'gray')
-    #plt.show()
 
     # Test out blob detection
     map.locate_molecules(map.processed_image, width, disp = True)
-    print(map.all_molecules_pixels)
-    print(map.pixel2point(map.all_molecules_pixels.astype(int)))
+    print(map.all_molecules_pixel)
+    print(map.all_molecules)
