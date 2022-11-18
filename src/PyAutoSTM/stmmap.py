@@ -41,8 +41,8 @@ class STMMap:
         self.img_processor = process_img
 
     # Method for processing/thresholding image
-    def process_img(self, image, width):
-        self.processed_image = self.img_processor(image, width)
+    def process_img(self, image, width, disp = 'False'):
+        self.processed_image = self.img_processor(image, width, disp)
 
     # Method for locating molecules, given a blob detection function
     def locate_molecules(self, blob_detector, image):
@@ -121,12 +121,13 @@ if __name__ == "__main__":
     bias_V = 0.2
     num_pixels = 256
 
-    image = sc_sim.create_sim_topo_image(pos_arr, width, bias_V, num_pixels, 200)
+    image = sc_sim.create_sim_topo_image(pos_arr, width, bias_V, num_pixels, 500)
 
     map = STMMap(image, 0, 0, width, width, 0)
-    map.process_img(image, width) 
+    map.process_img(image, width, True) 
 
-    from imgsim.basic_image import annihilate_blob
+    from autoutils.stmimaging import annihilate_blob
+    
     new_img = annihilate_blob(map.processed_image, int(256/2), int(256/2))
 
     import matplotlib.pyplot as plt
