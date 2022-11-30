@@ -17,7 +17,10 @@ import matplotlib.pyplot as plt
 import time
 
 import autoutils.astar as astar
+import autocmd as cmd
+
 from imgsim.scattered_image import create_sim_topo_image
+from autoutils.stmimaging import annihilate_blob, enlarge_obstacles
 from stmmap import STMMap
 from tcp import Nanonis
 
@@ -44,18 +47,96 @@ def automation_main(stm_image, desired_pos_arr, centX, centY, width, plot_proces
     stm_map.define_final_configuration(desired_pos_arr)
     stm_map.assign_molecules()
 
-    # Primary loop -- start with initiating stm
+    if plot_process:
 
-    # Scanning mode
+        fig = plt.figure()
+        axes = plt.axes()
 
-    # Move tip
+        # Visualize physical coordinates of molecules + coordinates of goal configuration
+        axes.set_title('Physical representation')
+        axes.scatter(stm_map.all_molecules[:, 0], stm_map.all_molecules[:, 1])
+        axes.scatter(stm_map.assigned_final_config[:,0], stm_map.assigned_final_config[:, 1])
 
-    # Manipulation mode
-    # Slow
-    # Slowly move tip to final
-    # Scanning mode
-    # Scan/i.e. regenerate new image
-    # Do image processing to see if moved successfully
+        for i in np.arange(0, desired_pos_arr.shape[0], 1):
+            axes.plot([stm_map.assigned_init_config[i, 0], stm_map.assigned_final_config[i, 0]], 
+                    [stm_map.assigned_init_config[i, 1], stm_map.assigned_final_config[i, 1]], color = "black")
+
+        axes.set_xlim(centX - width/2, centY + width/2)
+        axes.set_ylim(centY - width/2, centY + width/2)
+        axes.set_aspect('equal')
+
+        plt.show()
+
+    ## Primary loop -- start with initiating stm
+    stm = Nanonis()
+    stm.connect()
+    stm.zctrl_onoffset(1)
+
+    # Initialize data arrays
+    V_arr = []
+    I_arr = []
+    z_arr = []
+    t_arr = []
+    pos_arr = []
+
+    # Get starting time
+    t0 = time.time()
+
+    # Start of primary for loop
+    for i in np.arange(0, desired_pos_arr.shape[0], 1):
+
+        # Scanning mode
+        cmd.scan_mode(stm, BIAS_SCAN, SETPOINT_SCAN, SPEED_MANIP)
+
+        # Find path from current position to tip
+        curr_pos = stm.folme_xyposget(wait_for_new = 0)
+        curr_pos = np.array([[curr_pos[0], curr_pos[1]]])
+        pixel_start = stm_map.point2pixel(curr_pos)[0]
+        pixel_imol_loc = stm_map.point2pixel(np.array([stm_map.assigned_init_config[i, :]]))[0] # Take 0th element as we only want a 2 vector but gives us 1 x 2 array
+
+        # Don't actually take path finding on the stm graph (i.e. the binarized image) into account for this step
+        # Only need to do proper path finding when manipulating molecule
+        print('right here bud')
+        pixel_path_arr_starttoi = astar.find_path_array(np.zeros(stm_map.raw_image.shape), 1, pixel_start, pixel_imol_loc)
+
+        # Move to initial molecule
+        V_arr, I_arr, z_arr, pos_arr, t_arr = cmd.follow_path(stm, stm_map, pixel_path_arr_starttoi, V_arr, I_arr, z_arr, pos_arr, t_arr, t0 = t0)
+
+        # Manipulation mode
+        cmd.manip_mode(stm, BIAS_MANIP, SETPOINT_MANIP, SPEED_MANIP)
+
+        # Modify map by removing the molecule to be moved from the map in order to not consider it for path finding
+        pixel_fmol_loc = stm_map.point2pixel(np.array([stm_map.assigned_final_config[i, :]]))[0] # Take 0th element as we only want a 2 vector but gives us 1 x 2 array
+        stm_img_image = annihilate_blob(stm_map.processed_image, pixel_imol_loc[0], pixel_imol_loc[1]) # Take molecule we're working with in map/image for path finding purposes
+
+        # Create a separate variable to store the stm binarized image and copy it
+        stm_img_image_map = stm_img_image.copy()
+        stm_img_image_map = enlarge_obstacles(stm_img_image_map)
+
+        # Find path from molecule to final location it will be placed
+        pixel_path_arr_itof = astar.find_path_array(stm_img_image_map, 1, pixel_imol_loc, pixel_fmol_loc)
+
+        # If plotting, show path
+        if plot_process:
+
+            # Create a new copy of stm map to draw path on
+            stm_img_image_path = stm_img_image.copy()    
+
+            # Activate pixels of path
+            for coord in pixel_path_arr_itof:
+                stm_img_image_path[int(coord[0]), int(coord[1])] = 1
+
+            # Redraw molecule that was erased and then plot
+            fig, axes = plt.subplots(1, 1)
+            axes.imshow(stm_img_image_path, cmap = 'gray_r')
+            axes.set_title(f'Path from i to f from manipulation {i}')
+            plt.show()
+
+        # Slowly move tip to final
+
+        # Scanning mode
+        # "Scan"/i.e. regenerate new image
+        # Do image processing to see if moved successfully - Optional for now bruh
     
 if __name__ == "__main__":
 
@@ -67,7 +148,7 @@ if __name__ == "__main__":
     molecules_pos_arr = np.array([[7, 3], [5, 5], [9, 7], [3.5, 5], [4, -2], [-4, -4], [5, -5], [-7, -7], [-5, 6]]) * 1e-9
 
     image = create_sim_topo_image(molecules_pos_arr, img_width, bias_V, num_pixels, integration_points)
-    desired_pos_arr = np.array([[2, -2], [2, 2], [-2, 2], [-2, -2]])
+    desired_pos_arr = np.array([[2, -2], [2, 2], [-2, 2], [-2, -2]]) * 1e-9
 
     centX = 0
     centY = 0
