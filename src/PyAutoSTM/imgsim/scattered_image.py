@@ -271,6 +271,9 @@ def create_sim_image(mol_pos_arr, width, bias_V, num_pixels):
     mol_pos_arr = mol_pos_arr * 1e10
     width = width * 1e10
 
+    # Don't remember why, but for some reason -y is up while +y is down so flip it so that +x is right and +y is up
+    mol_pos_arr[:, 1] = -1*mol_pos_arr[:, 1]
+
     delta = 0.2*(-1+1j)
 
     # Get image

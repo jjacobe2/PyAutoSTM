@@ -28,53 +28,28 @@ BIAS_MANIP = 10e-3 # 10 mV
 SETPOINT_MANIP = 80e-9 # 80nA
 SPEED_MANIP = 1e-9 # 1nm/s
 
-def follow_path(tcp_client : Nanonis, stm_map : STMMap, path_arr : list, V_arr : list, I_arr : list, 
-    z_arr : list, pos_arr : list, t_arr : list, t0: float, sampling: bool = True):
-    ''' Function for handling tcp commands to follow a certain path
-
-    Args:
-        tcp_client (Nanonis): the TCP client connected to the Nanonis SPM Controller software
-        stm_map (STMMap): the image/map the tip is currently working with
-        path_arr (list): nested list where each element is a list of length 2 representing the x, y variable of each node in the path
-        V_arr (list): list of bias V to be measured
-        I_arr (list): list of current I to be measured
-        z_arr (list): list of z position Z to be measured
-        pos_arr (list): list of plane position x, y to be measured
-        t_arr (list): list of recorded time t to be measured
-        t0 (float): reference starting time of whole automation process
-        sampling (bool): 1 = want to add another observation to V_arr, I_arr, etc. 0 = don't add
-    '''
-
-    # Convert path arr from pixel --> x,y array
-    phys_path_arr = stm_map.pixel2point(path_arr)
-
-    # Go through each node in path and move tip to those nodes
-    for point in phys_path_arr:
-        tcp_client.folme_xyposset(point[0], point[1], wait_end_of_move = 1)
-        if sampling:
-            V_arr = V_arr + [tcp_client.bias_get()]
-            I_arr = I_arr + [tcp_client.current_get()]
-            z_arr = z_arr + [tcp_client.zctrl_zposget()]
-            t_arr = t_arr + [time.time() - t0]
-            x, y = tcp_client.folme_xyposget(wait_for_new = 0)
-            pos_arr = pos_arr + [[x, y]]
-
-    return V_arr, I_arr, z_arr, pos_arr, t_arr
-
 # Function main 
-def automation_main():
-    '''
+def automation_main(stm_image, desired_pos_arr, centX, centY, width, plot_process = False):
+    ''' 
     '''
 
     # Create STMMap object
+    stm_map = STMMap(image, centX, centY, width, width, 0)
 
     # Blob detection
+    stm_map.process_img(image, width, disp = True) # Process image
+    stm_map.locate_molecules(stm_map.processed_image, width, disp = True) # Detect blobs
 
-    # Assignment
+    # Hungarian Assignment
+    stm_map.define_final_configuration(desired_pos_arr)
+    stm_map.assign_molecules()
 
-    # Primary loop
+    # Primary loop -- start with initiating stm
+
     # Scanning mode
+
     # Move tip
+
     # Manipulation mode
     # Slow
     # Slowly move tip to final
@@ -83,7 +58,19 @@ def automation_main():
     # Do image processing to see if moved successfully
     
 if __name__ == "__main__":
+
+    # Create image
     img_width = 20e-9
     bias_V = 0.5
     num_pixels = 256
-    molecules_pos_arr = np.array([[]])
+    integration_points = 150
+    molecules_pos_arr = np.array([[7, 3], [5, 5], [9, 7], [3.5, 5], [4, -2], [-4, -4], [5, -5], [-7, -7], [-5, 6]]) * 1e-9
+
+    image = create_sim_topo_image(molecules_pos_arr, img_width, bias_V, num_pixels, integration_points)
+    desired_pos_arr = np.array([[2, -2], [2, 2], [-2, 2], [-2, -2]])
+
+    centX = 0
+    centY = 0
+    width = img_width
+
+    automation_main(image, desired_pos_arr, centX, centY, width, plot_process = True)
