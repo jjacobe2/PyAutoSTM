@@ -107,14 +107,12 @@ def automation_main(stm_image, desired_pos_arr, centX, centY, width, plot_proces
 
         # Modify map by removing the molecule to be moved from the map in order to not consider it for path finding
         pixel_fmol_loc = stm_map.point2pixel(np.array([stm_map.assigned_final_config[i, :]]))[0] # Take 0th element as we only want a 2 vector but gives us 1 x 2 array
-        stm_img_image = annihilate_blob(stm_map.processed_image, pixel_imol_loc[1], pixel_imol_loc[0]) # Take molecule we're working with in map/image for path finding purposes
+        stm_img_image = annihilate_blob(stm_map.processed_image, pixel_imol_loc[0], pixel_imol_loc[1]) # Take molecule we're working with in map/image for path finding purposes
 
         # Create a separate variable to store the stm binarized image and copy it
         stm_img_image_map = stm_img_image.copy()
         stm_img_image_map = enlarge_obstacles(stm_img_image_map)
 
-        plt.imshow(stm_img_image_map)
-        plt.show()
         # Find path from molecule to final location it will be placed
         pixel_path_arr_itof = astar.find_path_array(stm_img_image_map, 1, pixel_imol_loc, pixel_fmol_loc)
 
@@ -135,9 +133,19 @@ def automation_main(stm_image, desired_pos_arr, centX, centY, width, plot_proces
             plt.show()
 
         # Slowly move tip to final
+        V_arr, I_arr, z_arr, pos_arr, t_arr = cmd.follow_path(stm, stm_map, pixel_path_arr_itof, V_arr, I_arr, z_arr, pos_arr, t_arr, t0 = t0)
 
-        # Scanning mode
         # "Scan"/i.e. regenerate new image
+        stm_map.confirm_successful_move(i)
+        molecule_locations = stm_map.unmoved_all_molecules.tolist()
+        for j in range(i):
+            molecule_locations = molecule_locations + desired_pos_arr[i, :].tolist()
+
+        molecule_locations = np.array(molecule_locations)
+        i_img = create_sim_topo_image(molecule_locations, img_width, bias_V, num_pixels, integration_points)
+
+        plt.imshow(i_img, cmap = 'gray')
+        plt.show()
         # Do image processing to see if moved successfully - Optional for now bruh
     
 if __name__ == "__main__":
@@ -146,7 +154,7 @@ if __name__ == "__main__":
     img_width = 20e-9
     bias_V = 0.5
     num_pixels = 256
-    integration_points = 150
+    integration_points = 20
     molecules_pos_arr = np.array([[7, 3], [5, 5], [9, 7], [3.5, 5], [4, -2], [-4, -4], [5, -5], [-7, -7], [-5, 6]]) * 1e-9
 
     image = create_sim_topo_image(molecules_pos_arr, img_width, bias_V, num_pixels, integration_points)

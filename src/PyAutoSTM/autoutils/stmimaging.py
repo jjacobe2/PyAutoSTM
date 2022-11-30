@@ -195,7 +195,7 @@ def annihilate_square_blob(image, y_c, x_c, width = WIDTH):
     return new_image
 
 # Function to recursively annihilate a "blob", i.e. a group of on pixels that are neighbours. To be used for pathfinding purposes
-def annihilate_blob(image, x_c, y_c):
+def annihilate_blob(image, y_c, x_c):
     ''' Annihilates a group of on-pixels next to each other on an image array, where x_c and y_c can represent pixel locations of the center of the 
     blob, but it can be any location of the blob.
 
