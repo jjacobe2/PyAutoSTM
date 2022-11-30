@@ -76,9 +76,9 @@ class STMMap:
     # Method for confirming a move and removing a molecule from variable for storing specifically the assigned molecules that haven't been moved
     # and for also storing final molecule positions that haven't been "filled" yet
     def confirm_successful_move(self, index):
-        self.unmoved_all_molecules = np.delete(self.unmoved_all_molecules, self.assigned_indices[index], axis = 0)
-        self.unmoved_init_molecules = np.delete(self.unmoved_init_molecules, index, axis = 0)
-        self.unfilled_final_molecules = np.delete(self.unfilled_final_molecules, index, axis = 0)
+        self.unmoved_all_molecules = np.delete(self.unmoved_all_molecules, self.assigned_indices[index] - index, axis = 0)
+        self.unmoved_init_molecules = np.delete(self.unmoved_init_molecules, 0, axis = 0) # Pop front member
+        self.unfilled_final_molecules = np.delete(self.unfilled_final_molecules, 0, axis = 0) # Pop front member
 
     # insert function here doing pixel --> physical transformation & vice versa
     def pixel2point(self, pixel_arr):

@@ -41,13 +41,13 @@ def automation_main(stm_image, desired_pos_arr, centX, centY, width, plot_proces
 
     # Blob detection
     stm_map.process_img(image, width, disp = True) # Process image
-    plt.imshow(stm_map.processed_image)
     stm_map.locate_molecules(stm_map.processed_image, width, disp = True) # Detect blobs
 
     # Hungarian Assignment
     stm_map.define_final_configuration(desired_pos_arr)
     stm_map.assign_molecules()
 
+    # Show hungarian assignment result
     if plot_process:
 
         fig = plt.figure()
@@ -68,7 +68,7 @@ def automation_main(stm_image, desired_pos_arr, centX, centY, width, plot_proces
 
         plt.show()
 
-    ## Primary loop -- start with initiating stm
+    # Initialize TCP client with STM software
     stm = Nanonis()
     stm.connect()
     stm.zctrl_onoffset(1)
@@ -107,7 +107,8 @@ def automation_main(stm_image, desired_pos_arr, centX, centY, width, plot_proces
 
         # Modify map by removing the molecule to be moved from the map in order to not consider it for path finding
         pixel_fmol_loc = stm_map.point2pixel(np.array([stm_map.assigned_final_config[i, :]]))[0] # Take 0th element as we only want a 2 vector but gives us 1 x 2 array
-        stm_img_image = annihilate_blob(stm_map.processed_image, pixel_imol_loc[0], pixel_imol_loc[1]) # Take molecule we're working with in map/image for path finding purposes
+        stm_img_image_path = stm_map.processed_image.copy() # Before removing molecule from map, save image into copy for use for showing path finding
+        stm_img_image = annihilate_blob(stm_map.processed_image.copy(), pixel_imol_loc[0], pixel_imol_loc[1]) # Take molecule we're working with in map/image for path finding purposes
 
         # Create a separate variable to store the stm binarized image and copy it
         stm_img_image_map = stm_img_image.copy()
@@ -116,11 +117,8 @@ def automation_main(stm_image, desired_pos_arr, centX, centY, width, plot_proces
         # Find path from molecule to final location it will be placed
         pixel_path_arr_itof = astar.find_path_array(stm_img_image_map, 1, pixel_imol_loc, pixel_fmol_loc)
 
-        # If plotting, show path
+        # If desired, show path
         if plot_process:
-
-            # Create a new copy of stm map to draw path on
-            stm_img_image_path = stm_img_image.copy()    
 
             # Activate pixels of path
             for coord in pixel_path_arr_itof:
@@ -138,15 +136,18 @@ def automation_main(stm_image, desired_pos_arr, centX, centY, width, plot_proces
         # "Scan"/i.e. regenerate new image
         stm_map.confirm_successful_move(i)
         molecule_locations = stm_map.unmoved_all_molecules.tolist()
+
         for j in range(i):
-            molecule_locations = molecule_locations + desired_pos_arr[i, :].tolist()
+            molecule_locations = molecule_locations + [desired_pos_arr[j, :].tolist()]
 
         molecule_locations = np.array(molecule_locations)
         i_img = create_sim_topo_image(molecule_locations, img_width, bias_V, num_pixels, integration_points)
 
         plt.imshow(i_img, cmap = 'gray')
         plt.show()
+
         # Do image processing to see if moved successfully - Optional for now bruh
+        stm_map.process_img(i_img, width, disp = True)
     
 if __name__ == "__main__":
 
