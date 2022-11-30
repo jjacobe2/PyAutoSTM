@@ -15,7 +15,6 @@ import struct
 import socket
 import matplotlib.pyplot as plt
 
-
 ###############################################
 # Data Structure to Byte Conversion Functions #       
 ###############################################
@@ -534,7 +533,7 @@ class Scan():
         
         reply = self.sock.recv(1024)
         
-        # Converting number of channels, number of pixels, and lines to 
+        # Converting number of channels, number of pixels, and lines from bytes to integer
         num_channels = hex2integer(reply[40:44])
         pixels = hex2integer(reply[44 + num_channels*4: 48 + num_channels*4])
         lines = hex2integer(reply[48 + num_channels*4: 52 + num_channels*4])
