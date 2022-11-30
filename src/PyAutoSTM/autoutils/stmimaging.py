@@ -20,6 +20,8 @@ CO_EFFECTIVE_SIZE = 1.5e-9 # FOR GAUSSIAN FILTERING
 CO_MIN_SIZE = 0.5e-9 # FOR BLOB DETECTION
 CO_MAX_SIZE = 2e-9 # FOR BLOB DETECTION
 
+WIDTH = 4
+
 # Invert image so dark --> light and vice versa (Want blobs to be "on pixels" and empty space to be "off pixels")
 def invert_img(img: np.ndarray):
     ''' Invert image so relative large values --> relative small values and vice versa. Do via simple inverse of data, i.e. do elementwise
@@ -89,8 +91,8 @@ def threshold_img(img: np.ndarray, method: str = 'otsu'):
 
     else:
         raise ValueError('ERROR: Method chosen in invalid')
-    
-    return bin_img
+
+    return bin_img.astype(int)
 
 # Function to do everything above in one pretty little packaged function :)
 def process_img(img: np.ndarray, width: float, disp: bool = False, denoising_method: str = 'gaussian filter', thresholding_method: str = 'otsu'):
@@ -152,7 +154,7 @@ def blob_detection(img: np.ndarray, width: float, method: str = 'log', disp: boo
 
     # Blob detection babyyyy
     if method == 'log':
-        blobs = blob_log(img, min_sigma = min_sigma, max_sigma = max_sigma, overlap = 0.1)
+        blobs = blob_log(img.astype(bool), min_sigma = min_sigma, max_sigma = max_sigma, overlap = 0.1)
 
     # If doing so, show off blob detection
     if disp:
@@ -171,6 +173,26 @@ def blob_detection(img: np.ndarray, width: float, method: str = 'log', disp: boo
     blob_coordinates = blobs[:, :2]
 
     return blob_coordinates
+
+def annihilate_square_blob(image, y_c, x_c, width = WIDTH):
+    ''' Function for annihilating a square blob from an image given its coordinates
+    '''
+
+    new_image = image.copy()
+
+    # Extra two pixels to make sure to annihilate whole blob -- DEF FIND ANOTHER WAY TO DO THIS
+    width = width + 4
+
+    # Get arrays for the x and y indices to turn on in array
+    pixels_x = np.arange(x_c - int(width/2), x_c + int(width/2), 1)
+    pixels_y = np.arange(y_c - int(width/2), y_c + int(width/2), 1)
+
+    # Turn off pixels
+    for pixel_y in pixels_y:
+        for pixel_x in pixels_x:
+            new_image[pixel_y, pixel_x] = 0
+
+    return new_image
 
 # Function to recursively annihilate a "blob", i.e. a group of on pixels that are neighbours. To be used for pathfinding purposes
 def annihilate_blob(image, x_c, y_c):

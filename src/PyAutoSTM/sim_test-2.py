@@ -41,6 +41,7 @@ def automation_main(stm_image, desired_pos_arr, centX, centY, width, plot_proces
 
     # Blob detection
     stm_map.process_img(image, width, disp = True) # Process image
+    plt.imshow(stm_map.processed_image)
     stm_map.locate_molecules(stm_map.processed_image, width, disp = True) # Detect blobs
 
     # Hungarian Assignment
@@ -106,7 +107,7 @@ def automation_main(stm_image, desired_pos_arr, centX, centY, width, plot_proces
 
         # Modify map by removing the molecule to be moved from the map in order to not consider it for path finding
         pixel_fmol_loc = stm_map.point2pixel(np.array([stm_map.assigned_final_config[i, :]]))[0] # Take 0th element as we only want a 2 vector but gives us 1 x 2 array
-        stm_img_image = annihilate_blob(stm_map.processed_image, pixel_imol_loc[0], pixel_imol_loc[1]) # Take molecule we're working with in map/image for path finding purposes
+        stm_img_image = annihilate_blob(stm_map.processed_image, pixel_imol_loc[1], pixel_imol_loc[0]) # Take molecule we're working with in map/image for path finding purposes
 
         # Create a separate variable to store the stm binarized image and copy it
         stm_img_image_map = stm_img_image.copy()
