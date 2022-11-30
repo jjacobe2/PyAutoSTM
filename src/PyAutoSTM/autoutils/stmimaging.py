@@ -240,7 +240,16 @@ def enlarge_obstacles(img: np.ndarray, pixel_size: int = 2):
         for j in np.arange(0, width, 1):
             if img[i, j] == 1:
                 for k in np.arange(1, pixel_size + 1, 1):
-                    pass
+                    if i - k >= 0:
+                        mod_img[i - k, j] = 1
+                    if j - k >= 0:
+                        mod_img[i, j - k] = 1
+                    if i + k < img.shape[0]:
+                        mod_img[i + k, j] = 1
+                    if j + k < img.shape[1]:
+                        mod_img[i, j + k] = 1
+
+    return mod_img
                 
 if __name__ == "__main__":
     pass
