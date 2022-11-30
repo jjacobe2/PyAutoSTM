@@ -96,7 +96,6 @@ def automation_main(stm_image, desired_pos_arr, centX, centY, width, plot_proces
 
         # Don't actually take path finding on the stm graph (i.e. the binarized image) into account for this step
         # Only need to do proper path finding when manipulating molecule
-        print('right here bud')
         pixel_path_arr_starttoi = astar.find_path_array(np.zeros(stm_map.raw_image.shape), 1, pixel_start, pixel_imol_loc)
 
         # Move to initial molecule
@@ -113,6 +112,8 @@ def automation_main(stm_image, desired_pos_arr, centX, centY, width, plot_proces
         stm_img_image_map = stm_img_image.copy()
         stm_img_image_map = enlarge_obstacles(stm_img_image_map)
 
+        plt.imshow(stm_img_image_map)
+        plt.show()
         # Find path from molecule to final location it will be placed
         pixel_path_arr_itof = astar.find_path_array(stm_img_image_map, 1, pixel_imol_loc, pixel_fmol_loc)
 
