@@ -31,16 +31,25 @@ BIAS_MANIP = 10e-3 # 10 mV
 SETPOINT_MANIP = 80e-9 # 80nA
 SPEED_MANIP = 1e-9 # 1nm/s
 
-# Function main 
-def automation_main(stm_image, desired_pos_arr, centX, centY, width, plot_process = False):
-    ''' 
+# Main driver function to perform automation
+def automation_main(stm_image: np.ndarray, desired_pos_arr: np.ndarray, centX: float, centY: float, width: float, plot_process: bool = False):
+    ''' Perform automation of system specificied by desired_pos_arr in an STM image with specified image parameters and physical
+    locations
+
+    Args:   
+        stm_image (np.ndarray): 2D np array representing raw STM image from scan
+        desired_pos_arr (np.ndarray): Nx2 array containing locations (in units of metres) of desired locations for CO
+        centX (float): x-position of center of image (m)
+        centY (float): y-position of center of image (m)
+        width (float): width of image (m) -> Assuming that width = height (i.e. have a square image)
+        plot_process (bool): True if want to show and plot each step in process, False if not
     '''
 
     # Create STMMap object
-    stm_map = STMMap(image, centX, centY, width, width, 0)
+    stm_map = STMMap(stm_image, centX, centY, width, width, 0)
 
     # Blob detection
-    stm_map.process_img(image, width, disp = True) # Process image
+    stm_map.process_img(stm_image, width, disp = True) # Process image
     stm_map.locate_molecules(stm_map.processed_image, width, disp = True) # Detect blobs
 
     # Hungarian Assignment
