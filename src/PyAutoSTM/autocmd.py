@@ -78,3 +78,4 @@ def manip_mode(stm: Nanonis, bias_V: float, setpoint: float, tip_speed: float):
     stm.folme_speedset(tip_speed, custom_speed_mod = 1) # Use given tip_speed
 
 # Scan with specific settings and give data from channel
+def perform_scan(stm: Nanonis, ):

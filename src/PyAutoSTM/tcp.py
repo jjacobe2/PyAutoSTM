@@ -541,7 +541,7 @@ class Scan():
         return num_channels, pixels, lines
         
     # Scan.SpeedSet
-    def scan_speedset(self, flin_speed, blin_speed, ftime_per_line, btime_per_line, par_const):
+    def scan_speedset(self, flin_speed, blin_speed, ftime_per_line, btime_per_line, par_const, speed_ratio):
         ''' Configure the scan speed parameters
 
         Args:
@@ -552,12 +552,13 @@ class Scan():
             par_const (unsigned int16): defines which speed parameter to keep constant, where
             0 means no change, 1 keeps the linear speed constant, and 2 keeps the time per line
             constant
+            speed_ratio (float): defines the backwards linear speed related to forward linear speed
         '''
         
         name = b'Scan.SpeedSet'
 
         header = create_header(name, body_size = 18)
-        body = float2hex(flin_speed) + float2hex(blin_speed) + float2hex(ftime_per_line) + float2hex(btime_per_line) + unsignedshort2hex(par_const)
+        body = float2hex(flin_speed) + float2hex(blin_speed) + float2hex(ftime_per_line) + float2hex(btime_per_line) + unsignedshort2hex(par_const) + float2hex(speed_ratio)
         message = header + body
 
         self.sock.send(message)
