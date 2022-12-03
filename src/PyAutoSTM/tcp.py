@@ -524,6 +524,16 @@ class Scan():
 
     # Scan.BufferGet
     def scan_bufferget(self):
+        ''' Get scan buffer parameters
+
+        Args:
+            N/A
+
+        Returns:
+            num_channels (int)
+            pixels (int)
+            lines (int)
+        '''
         name = b'Scan.BufferGet'
         
         header = create_header(name, body_size = 4)

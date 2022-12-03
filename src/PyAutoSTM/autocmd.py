@@ -78,4 +78,35 @@ def manip_mode(stm: Nanonis, bias_V: float, setpoint: float, tip_speed: float):
     stm.folme_speedset(tip_speed, custom_speed_mod = 1) # Use given tip_speed
 
 # Scan with specific settings and give data from channel
-def perform_scan(stm: Nanonis, ):
+def perform_scan(stm: Nanonis, centX: float, centY: float, width: float, angle: float, scan_dir: int = 0, timeout: int = 120000):
+    ''' Perform scan with given scan parameters and return scan frame data after done with scan
+
+    Args:
+        stm (Nanonis): TCP client
+        centX (float): x-coordinate of center of scan frame
+        centY (float): y-coordinate of center of scan frame
+        width (float): width of scan frame (assume square frame so width = height)
+        angle (float): angle of scan frame
+        scan_dir (int): direction of scanning. 0 for down, 1 for up
+        timeout (int): timeout for scanning in milliseconds
+
+    Returns:
+        scan_frame_data (np.ndarray): 2D data array for scan frame
+    '''
+
+    # Set scan frame parameters
+    stm.scan_frameset(centX = centX, centY = centY, width = width, height = width, angle = angle)
+
+    # Actually perform scan
+    stm.scan_action(action = 0, direction = scan_dir)
+
+    # Wait until scan is done or until timeout
+    stm.scan_waitendofscan(timeout = timeout)
+
+    # Get scan buffer parameters
+    num_channels, pixels, lines = stm.scan_bufferget()
+
+    # Get scan data
+    scan_frame_data = stm.scan_framedatagrab(0, 1, lines, pixels)
+
+    return scan_frame_data
