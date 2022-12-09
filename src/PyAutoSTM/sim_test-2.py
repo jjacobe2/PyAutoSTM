@@ -147,8 +147,8 @@ def automation_main(stm_image: np.ndarray, desired_pos_arr: np.ndarray, centX: f
         stm_map.confirm_successful_move(i)
         molecule_locations = stm_map.unmoved_all_molecules.tolist()
 
-        for j in range(i):
-            molecule_locations = molecule_locations + [desired_pos_arr[j, :].tolist()]
+        for j in range(i+1):
+            molecule_locations = molecule_locations + [stm_map.assigned_final_config[j, :].tolist()]
 
         molecule_locations = np.array(molecule_locations)
         i_img = create_sim_topo_image(molecule_locations, img_width, bias_V, num_pixels, integration_points)

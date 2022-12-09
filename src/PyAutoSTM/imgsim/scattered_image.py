@@ -324,7 +324,7 @@ if __name__ == "__main__":
     LDOS = kmap(pos_arr, mapsize, 0.5, 256, delta) ** 2
     '''
 
-    pos_arr = np.array([[0, 1], [8, 9], [2, 2], [2, 0]]) * 1e-9
+    pos_arr = np.array([[0, 1], [8, -9], [2, 2], [2, 0]]) * 1e-9
     width = 20e-9
 
     # Create dI/dV

@@ -103,7 +103,9 @@ def astar(maze, start, end):
 def find_path_array(maze, cost, start, end):
     ''' Convert tuples_list outputted by search as an Nx2 array of pixels, where first column is pixel y is seoncd column is pixel x
     '''
-    tuples_list = astar(maze, cost, start, end)
+    start = (start[0], start[1])
+    end = (end[0], end[1])
+    tuples_list = astar(maze, start, end)
 
     path_arr = np.zeros((len(tuples_list), 2))
 
