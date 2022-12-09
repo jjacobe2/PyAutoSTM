@@ -16,8 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-#import autoutils.astar as astar
-import autoutils.new_astar as astar
+import autoutils.astar as astar
 import autocmd as cmd
 
 from imgsim.scattered_image import create_sim_topo_image
