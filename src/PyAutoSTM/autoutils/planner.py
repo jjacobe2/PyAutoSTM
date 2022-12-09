@@ -81,9 +81,8 @@ def sortcolumns(columns: list) -> list:
         new_columns += [sorted_column]
 
     return new_columns
-    
 
-def planner(mol_pos_arr: np.ndarray, dx: float = 1.5e-9) -> np.ndarray:
+def planner(mol_pos_arr: np.ndarray, dx: float = 1.5e-9) -> list:
     ''' Function to sort x, y locations in mol_pos_arr so that it is built column by column from left to right and
     each column is built from bottom to top.
 
@@ -101,13 +100,46 @@ def planner(mol_pos_arr: np.ndarray, dx: float = 1.5e-9) -> np.ndarray:
     # Sort each CO molecule location from highest to lowest y-value
     sorted_columns = sortcolumns(columns)
 
-    # Rejoin columns in their sorted form and returns
-    new_pos_arr = sorted_columns[0] # Take first column
+    return sorted_columns
+
+def rejoin_columns(sorted_columns: list) -> np.ndarray:
+    ''' Function to rejoin list of arrays representing a column, each of which are Ni x 2 arrays where Ni is the number of molecules
+    in the column. Rejoins them into a N x 2 array where N = N1 + N2 + ... + Ni + ... Nn where there are n columns.
+
+    Rejoining is done such that the first N1 elements correspond to the N1 column and the N2 number of elements after the first N1 elements
+    correspond to the N2 column, etc.
+    '''
+
+    # Start with the first column
+    new_pos_arr = sorted_columns[0]
+
+    # Stack arrays sequentially in the order they come in the sorted_columns list
     for i in np.arange(1, len(sorted_columns)):
         new_pos_arr = np.vstack((new_pos_arr, sorted_columns[i]))
 
     return new_pos_arr
 
 if __name__ == "__main__":
-    mol_pos_arr = np.array([[1, 0]])
+    dx = 0.05
+    N = 25
+    mol_pos_arr = np.random.rand(N, 2)
+    columns = planner(mol_pos_arr, dx = dx)
+
+    fig = plt.figure()
+    axes = plt.axes()
+    axes.scatter(mol_pos_arr[:, 0], mol_pos_arr[:, 1])
+    axes.set_xlim(-0.1, 1.1)
+    axes.set_ylim(-0.1, 1.1)
+    axes.set_aspect('equal')
+    plt.show()
     
+    axes = plt.axes()
+    for column in columns:
+        axes.scatter(column[:, 0], column[:, 1])
+        for i in np.arange(0, column.shape[0], 1):
+            axes.annotate(str(i), (column[i, 0], column[i, 1]))
+
+    axes.set_xlim(-0.1, 1.1)
+    axes.set_ylim(-0.1, 1.1)
+    axes.set_aspect('equal')
+    plt.show()
