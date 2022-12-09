@@ -199,3 +199,5 @@ def find_path_array(maze, cost, start, end):
     return path_arr
 
 
+if __name__ == "__main__":
+    pass
