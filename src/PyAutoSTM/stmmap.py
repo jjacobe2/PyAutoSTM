@@ -52,8 +52,8 @@ class STMMap:
         self.blob_detector = blob_detection
 
     # Method for processing/thresholding image
-    def process_img(self, image, width, disp = False):
-        self.processed_image = self.img_processor(image, width, disp)
+    def process_img(self, image, width, invert = False, disp = False):
+        self.processed_image = self.img_processor(image, width, invert = invert, disp = disp)
 
     # Method for locating molecules, given a blob detection function
     def locate_molecules(self, image, width, disp = False):
