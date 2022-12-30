@@ -158,13 +158,19 @@ def automation_main(desired_pos_arr: np.ndarray, centX: float, centY: float, wid
         
         # Slowly move tip to final
         cmd.follow_path(stm, stm_map, pixel_path_arr_itof, sampling = False)
-
+        
+        # Scanning mode
+        cmd.scan_mode(stm, BIAS_SCAN, SETPOINT_SCAN, SPEED_MANIP)
+        
         # Scan new image to use as new map
         new_img = cmd.perform_scan(stm, centX, centY, width, 0)
         stm_map.process_img(new_img, width)
 
         plt.title(f'STM Image after Assembly Step {i + 1}')
         plt.imshow(stm_map.processed_image, cmap = 'gray')
+        plt.show()
+
+    
 if __name__ == "__main__":
     
     # Funsies header for the terminal
